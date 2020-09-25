@@ -4,37 +4,16 @@ project (MarsLander_Genetic)
 
 find_package(OpenGL REQUIRED)
 
-if( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
-    message( FATAL_ERROR "Please select another Build Directory ! (and give it a clever name, like bin_Visual2012_64bits/)" )
-endif()
-if( CMAKE_SOURCE_DIR MATCHES " " )
-	message( "Your Source Directory contains spaces. If you experience problems when compiling, this can be the cause." )
-endif()
-if( CMAKE_BINARY_DIR MATCHES " " )
-	message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
-endif()
-
 # Compile external dependencies 
 add_subdirectory (external)
 
-# On Visual 2005 and above, this module can set the debug working directory
-cmake_policy(SET CMP0026 OLD)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/rpavlik-cmake-modules-fe2273")
-include(CreateLaunchers)
-include(MSVCMultipleProcessCompile) # /MP
-
-if(INCLUDE_DISTRIB)
-	add_subdirectory(distrib)
-endif(INCLUDE_DISTRIB)
 
 include_directories(
-	external/AntTweakBar-1.16/include/
 	external/glfw-3.1.2/include/
 	external/glm-0.9.7.1/
 	external/glew-1.13.0/include/
-	external/assimp-3.0.1270/include/
-	external/bullet-2.81-rev2613/src/
-	include/
+	1_MarsLander_Genetic/
+	./
 )
 
 set(ALL_LIBS
@@ -51,19 +30,41 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-add_executable(MarsLander
-	src/main.cpp
+# 0_TestOpenGL
+add_executable(cube3D
+	0_TestOpenGL/cube.cpp
 	common/shader.cpp
 	common/shader.hpp
 	common/quaternion_utils.cpp
 	common/quaternion_utils.hpp
-	src/cube.cpp
-	src/Genetic.cpp
-	src/Rocket.cpp
-	src/Utils.cpp
+	0_TestOpenGL/shaders/TransformVertexShader.vertexshader
+	0_TestOpenGL/shaders/ColorFragmentShader.fragmentshader
+)
+target_link_libraries(cube3D
+	${ALL_LIBS}
 )
 
-target_link_libraries(MarsLander
+# 1_MarsLander_Genetic
+add_executable(MarsLander_Genetic
+	1_MarsLander_Genetic/main.cpp
+	common/shader.cpp
+	common/shader.hpp
+	1_MarsLander_Genetic/Rocket.cpp
+	1_MarsLander_Genetic/Rocket.hpp
+	1_MarsLander_Genetic/Genetic.cpp
+	1_MarsLander_Genetic/Genetic.hpp
+	1_MarsLander_Genetic/Utils.cpp
+	1_MarsLander_Genetic/Utils.hpp
+	1_MarsLander_Genetic/levels.hpp
+	1_MarsLander_Genetic/shaders/FloorFragmentShader.fragmentshader
+	1_MarsLander_Genetic/shaders/FloorVertexShader.vertexshader
+	1_MarsLander_Genetic/shaders/RocketFireFragmentShader.fragmentshader
+	1_MarsLander_Genetic/shaders/RocketFireVertexShader.vertexshader
+	1_MarsLander_Genetic/shaders/RocketFragmentShader.fragmentshader
+	1_MarsLander_Genetic/shaders/RocketVertexShader.vertexshader
+
+)
+target_link_libraries(MarsLander_Genetic
 	${ALL_LIBS}
 )
 
