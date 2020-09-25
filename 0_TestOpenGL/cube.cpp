@@ -17,6 +17,8 @@
 #include <glm/gtx/quaternion.hpp>
 using namespace glm;
 
+// Modern OpenGL tutorial: http://www.opengl-tutorial.org/fr/
+
 #include <common/shader.hpp>
 
 int main()

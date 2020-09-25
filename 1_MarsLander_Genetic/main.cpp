@@ -26,15 +26,38 @@ using namespace glm;
 
 #define VISUALIZE_GENETIC
 
+#ifdef VISUALIZE_GENETIC
+static const int _SIZE_BUFFER_CHROMOSOME{ 3 * 2 * (_CHROMOSOME_SIZE - 1) };
+#endif
+
 bool _pause{ false };
 bool _close{ false };
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE)
+    {
+        _close = true;
+    }
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    {
+        if (_pause)
+        {
+            std::cout << "PLAY" << std::endl << std::endl;
+        }
+        else
+        {
+            std::cout << "PAUSE" << std::endl;
+        }
+        _pause = !_pause;
+    }
+}
 
 int main()
 {
-    const int size_level{ size_level5 };
-    const int* level{ level5 };
-    GeneticPopulation population(rocket5, level, size_level);
+    const int size_level{ size_level1 };
+    const int* level{ level1 };
+    GeneticPopulation population(rocket1, level, size_level);
 
 #ifdef VISUALIZE_GENETIC
     // Initialise GLFW
@@ -54,7 +77,7 @@ int main()
     window = glfwCreateWindow(875, 375, "Mars Lander", NULL, NULL);
     if (window == NULL)
     {
-        fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+        fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible.\n");
         glfwTerminate();
         return -1;
     }
@@ -118,11 +141,11 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, floorbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floor_buffer_data), floor_buffer_data, GL_STATIC_DRAW);
 
-    GLfloat rockets_line[_POPULATION_SIZE][3 * (2 * (_CHROMOSOME_SIZE - 1))];
+    GLfloat rockets_line[_POPULATION_SIZE * _SIZE_BUFFER_CHROMOSOME];
     for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom)
     {
-        rockets_line[chrom][0] = 2.f * static_cast<GLfloat>(population.rocket_save.x) / _w - 1;
-        rockets_line[chrom][1] = 2.f * static_cast<GLfloat>(population.rocket_save.y) / _h - 1;
+        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 0] = 2.f * static_cast<GLfloat>(population.rocket_save.x) / _w - 1;
+        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 1] = 2.f * static_cast<GLfloat>(population.rocket_save.y) / _h - 1;
     }
 #endif
 
@@ -138,8 +161,10 @@ int main()
         std::cout << "Generation " << generation++ << ":" << std::endl;
         population.initRockets();
 
+        // For every possible moves, i.e., for every genes
         for (int gen = 0; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen)
         {
+            // For every Rocket and their associated chromosome
             for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom)
             {
                 Rocket* rocket{ population.getRocket(chrom) };
@@ -178,14 +203,14 @@ int main()
                     }
 #ifdef VISUALIZE_GENETIC
                     const int idx{ 3 * (2 * gen + 1) };
-                    rockets_line[chrom][idx + 0] = static_cast<GLfloat>(2.f * rocket->x / _w - 1);
-                    rockets_line[chrom][idx + 1] = static_cast<GLfloat>(2.f * rocket->y / _h - 1);
-                    rockets_line[chrom][idx + 2] = 0.f;
+                    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0] = static_cast<GLfloat>(2.f * rocket->x / _w - 1);
+                    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1] = static_cast<GLfloat>(2.f * rocket->y / _h - 1);
+                    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 2] = 0.f;
                     if (gen != _CHROMOSOME_SIZE - 1)
                     {
-                        rockets_line[chrom][idx + 3] = rockets_line[chrom][idx + 0];
-                        rockets_line[chrom][idx + 4] = rockets_line[chrom][idx + 1];
-                        rockets_line[chrom][idx + 5] = 0.f;
+                        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 3] = rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0];
+                        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 4] = rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1];
+                        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 5] = 0.f;
                     }
                 }
                 else
@@ -193,14 +218,14 @@ int main()
                     if (gen < 2)
                         continue;
                     const int idx{ 3 * (2 * gen + 1) };
-                    rockets_line[chrom][idx + 0] = static_cast<GLfloat>(2.f * rocket->x / _w - 1);
-                    rockets_line[chrom][idx + 1] = static_cast<GLfloat>(2.f * rocket->y / _h - 1);
-                    rockets_line[chrom][idx + 2] = 0.f;
+                    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0] = static_cast<GLfloat>(2.f * rocket->x / _w - 1);
+                    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1] = static_cast<GLfloat>(2.f * rocket->y / _h - 1);
+                    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 2] = 0.f;
                     if (gen != _CHROMOSOME_SIZE - 1)
                     {
-                        rockets_line[chrom][idx + 3] = rockets_line[chrom][idx + 0];
-                        rockets_line[chrom][idx + 4] = rockets_line[chrom][idx + 1];
-                        rockets_line[chrom][idx + 5] = 0.f;
+                        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 3] = rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0];
+                        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 4] = rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1];
+                        rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 5] = 0.f;
                     }
 #endif
                 }
@@ -241,7 +266,7 @@ int main()
             GLuint rocketbuffer;
             glGenBuffers(1, &rocketbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, rocketbuffer);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(rockets_line[pop]), rockets_line[pop], GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, _SIZE_BUFFER_CHROMOSOME * sizeof(rockets_line[0]), &rockets_line[pop * _SIZE_BUFFER_CHROMOSOME], GL_STATIC_DRAW);
 
             glEnableVertexAttribArray(4);
             glBindBuffer(GL_ARRAY_BUFFER, rocketbuffer);
@@ -263,7 +288,6 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 #endif
-        //getchar();
     }
 
     std::chrono::duration<double> elapsed_seconds{ std::chrono::steady_clock::now() - start };
@@ -398,32 +422,9 @@ int main()
     glDeleteProgram(programIDRocket);
     glDeleteProgram(programIDLine);
 
-    delete[] floor_buffer_data;
-
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 #endif
 
     return 0;
 }
-
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE)
-    {
-        _close = true;
-    }
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        if (_pause)
-        {
-            std::cout << "PLAY" << std::endl << std::endl;
-        }
-        else
-        {
-            std::cout << "PAUSE" << std::endl;
-        }
-        _pause = !_pause;
-    }
-}
-
