@@ -23,7 +23,8 @@ using namespace glm;
 #include <Utils.hpp>
 #include <Genetic.hpp>
 
-#define VISUALIZE_GENETIC
+#define VISUALIZE_RESULT
+//#define VISUALIZE_GENETIC
 
 #ifdef VISUALIZE_GENETIC
 static const size_t _SIZE_BUFFER_CHROMOSOME{ 3 * 2 * (_CHROMOSOME_SIZE - 1) };
@@ -58,7 +59,7 @@ int main()
     const int* level{ level1 };
     GeneticPopulation population(rocket1, level, size_level);
 
-#ifdef VISUALIZE_GENETIC
+#if defined(VISUALIZE_RESULT) || defined(VISUALIZE_GENETIC)
     // Initialise GLFW
     if (!glfwInit())
     {
@@ -139,7 +140,8 @@ int main()
     glGenBuffers(1, &floorbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, floorbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floor_buffer_data), floor_buffer_data, GL_STATIC_DRAW);
-
+#endif
+#ifdef VISUALIZE_GENETIC
     GLfloat rockets_line[_POPULATION_SIZE * _SIZE_BUFFER_CHROMOSOME];
     for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom)
     {
@@ -302,7 +304,7 @@ int main()
     chromosome->chromosome[idxGene - 2].angle = 0;
     chromosome->chromosome[idxGene - 1].angle = 0;
 
-#ifdef VISUALIZE_GENETIC
+#ifdef VISUALIZE_RESULT
     if (solutionFound)
     {
         Rocket rocket{ population.rocket_save };
