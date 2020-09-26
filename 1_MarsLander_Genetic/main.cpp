@@ -9,7 +9,6 @@
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -27,7 +26,7 @@ using namespace glm;
 #define VISUALIZE_GENETIC
 
 #ifdef VISUALIZE_GENETIC
-static const int _SIZE_BUFFER_CHROMOSOME{ 3 * 2 * (_CHROMOSOME_SIZE - 1) };
+static const size_t _SIZE_BUFFER_CHROMOSOME{ 3 * 2 * (_CHROMOSOME_SIZE - 1) };
 #endif
 
 bool _pause{ false };
@@ -74,7 +73,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL 
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow(875, 375, "Mars Lander", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(875, 375, "Mars Lander", NULL, NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible.\n");
@@ -158,7 +157,7 @@ int main()
 
     while (!solutionFound)
     {
-        std::cout << "Generation " << generation++ << ":" << std::endl;
+        std::cout << "Generation " << generation++ << std::endl;
         population.initRockets();
 
         // For every possible moves, i.e., for every genes
@@ -257,7 +256,6 @@ int main()
 
         // Draw the line
         glDrawArrays(GL_LINES, 0, size_level * 2);
-        glDisableVertexAttribArray(0);
 
         for (int pop = 0; pop < _POPULATION_SIZE; ++pop)
         {
@@ -266,7 +264,7 @@ int main()
             GLuint rocketbuffer;
             glGenBuffers(1, &rocketbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, rocketbuffer);
-            glBufferData(GL_ARRAY_BUFFER, _SIZE_BUFFER_CHROMOSOME * sizeof(rockets_line[0]), &rockets_line[pop * _SIZE_BUFFER_CHROMOSOME], GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, _SIZE_BUFFER_CHROMOSOME * sizeof(rockets_line[0]), rockets_line + pop * _SIZE_BUFFER_CHROMOSOME, GL_STATIC_DRAW);
 
             glEnableVertexAttribArray(4);
             glBindBuffer(GL_ARRAY_BUFFER, rocketbuffer);
@@ -281,8 +279,12 @@ int main()
 
             // Draw the Rocket fire
             glDrawArrays(GL_LINES, 0, _CHROMOSOME_SIZE * 2);
-            glDisableVertexAttribArray(4);
+
+            glDeleteBuffers(1, &rocketbuffer);
         }
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(4);
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -315,6 +317,16 @@ int main()
     if (solutionFound)
     {
         Rocket rocket{ population.rocket_save };
+        GLfloat GL_rocket_buffer_data[] = {
+            0.f, 0.f, 0.f,
+            0.f, 0.f, 0.f,
+            0.f, 0.f, 0.f
+        };
+        GLfloat GL_fire_buffer_data[] = {
+            0.f, 0.f, 0.f,
+            0.f, 0.f, 0.f
+        };
+
         const int number_loop_within_1_sec{ 20 };
         double number_loop{ 0 };
         int number_second{ 0 };
@@ -358,8 +370,8 @@ int main()
                 }
 
                 number_loop++;
-                rocket.updateBuffers(number_loop / number_loop_within_1_sec);
-                if (checkCollision(&rocket.GL_rocket_buffer_data[0], 9, &floor_buffer_data[0], 3 * (2 * (size_level - 1))))
+                updateBuffers(rocket, number_loop / number_loop_within_1_sec, GL_rocket_buffer_data, GL_fire_buffer_data);
+                if (checkCollision(&GL_rocket_buffer_data[0], 9, &floor_buffer_data[0], 3 * (2 * (size_level - 1))))
                 {
                     rocket.isAlive = false;
                 }
@@ -371,7 +383,7 @@ int main()
             GLuint rocketbuffer;
             glGenBuffers(1, &rocketbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, rocketbuffer);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(rocket.GL_rocket_buffer_data), rocket.GL_rocket_buffer_data, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GL_rocket_buffer_data), GL_rocket_buffer_data, GL_STATIC_DRAW);
 
             glEnableVertexAttribArray(2);
             glBindBuffer(GL_ARRAY_BUFFER, rocketbuffer);
@@ -392,7 +404,7 @@ int main()
             GLuint rocketfirebuffer;
             glGenBuffers(1, &rocketfirebuffer);
             glBindBuffer(GL_ARRAY_BUFFER, rocketfirebuffer);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(rocket.GL_fire_buffer_data), rocket.GL_fire_buffer_data, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GL_fire_buffer_data), GL_fire_buffer_data, GL_STATIC_DRAW);
 
             glEnableVertexAttribArray(4);
             glBindBuffer(GL_ARRAY_BUFFER, rocketfirebuffer);

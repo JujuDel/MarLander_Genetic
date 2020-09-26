@@ -134,9 +134,6 @@ double distance(const Rocket& rocket, const int* floor_buffer, const int landing
 void GeneticPopulation::mutate()
 {
     double sum_fitness{ 0. };
-    int idxBest{ 0 };
-    int fitnessBest{ 0 };
-
     // Compute every fitness
     for (int i = 0; i < _POPULATION_SIZE; ++i)
     {
@@ -155,17 +152,7 @@ void GeneticPopulation::mutate()
             population[i].fitness -= abs(rockets_gen[i].vy) / 8.;
         }
         sum_fitness += population[i].fitness;
-
-        if (population[i].fitness > fitnessBest)
-        {
-            fitnessBest = population[i].fitness;
-            idxBest = i;
-        }
-        //std::cout << "  Fitness=" << population[i].fitness << std::endl;
     }
-
-    //std::cout << std::endl << "Best is " << idxBest << " -> " << population[idxBest].fitness << std::endl;
-    //rockets_gen[idxBest].debug();
 
     // Sort the fitness
     std::sort(population, population + sizeof(populationA) / sizeof(populationA[0]), &chromosome_sorter);
@@ -173,18 +160,7 @@ void GeneticPopulation::mutate()
     double cum_sum{ 0. };
     for (int i = _POPULATION_SIZE - 1; i >= 0; --i)
     {
-        //std::cout << "  Sorted Fitness=" << population[i].fitness / sum_fitness << std::endl;
         population[i].fitness = cum_sum + population[i].fitness / sum_fitness;
-        /*
-        if (i < _ELITISM_IDX)
-        {
-            std::cout << "  Sorted Fitness=" << population[i].fitness << " ELITE" << std::endl;
-        }
-        else
-        {
-            std::cout << "  Sorted Fitness=" << population[i].fitness << std::endl;
-        }
-        */
         cum_sum = population[i].fitness;
     }
 

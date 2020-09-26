@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <iostream>
 
+#include <GL/glew.h>
+
 #include <Utils.hpp>
 
 void applyRotation(Coord_d& P, const double c, const double s)
@@ -65,7 +67,7 @@ bool isIntersect(Line_d l1, Line_d l2)
     return false;
 }
 
-bool checkCollision(const float* rocket_buffer_data, const int size_rocket_buffer, const float* floor_buffer_data, const int size_floor_buffer)
+bool checkCollision(const GLfloat* rocket_buffer_data, const int size_rocket_buffer, const GLfloat* floor_buffer_data, const int size_floor_buffer)
 {
     assert(size_rocket_buffer == 9);
     Coord_d P1{ rocket_buffer_data[0], rocket_buffer_data[1] };

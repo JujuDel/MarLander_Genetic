@@ -9,6 +9,7 @@
 // Include GLEW
 #include <GL/glew.h>
 
+#include <Utils.hpp>
 #include <Rocket.hpp>
 
 static const double _g{ -3.711 }; // m/s-2
@@ -33,9 +34,7 @@ Rocket::Rocket(const double f_x, const double f_y, const double f_vx, const doub
     power{ f_power },
     fuel{ f_fuel },
     isAlive{ true },
-    floor_id_crash{ -1 },
-    GL_rocket_buffer_data{ 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f },
-    GL_fire_buffer_data{ 0.f, 0.f, 0.f, 0.f, 0.f, 0.f }
+    floor_id_crash{ -1 }
 {}
 
   /*******************************/
@@ -63,59 +62,6 @@ void Rocket::init(const Rocket& f_rocket)
 void Rocket::updateFuel()
 {
     fuel = std::max(0, fuel - power);
-}
-
-  /*******************************/
- /*       UpdatePosition        */
-/*******************************/
-void Rocket::updateBuffers(const double f_elapsed)
-{
-    assert(0 <= f_elapsed <= 1);
-
-    /* Formulas:
-    *    pos.x = acc.x * t^2 / 2 + vx0 * t + x0
-    *    pos.y = acc.y * t^2 / 2 + vy0 * t + y0
-    */
-
-    const double l_x{ ax * std::pow(f_elapsed, 2) / 2. + vx * f_elapsed + x };
-    const double l_y{ ay * std::pow(f_elapsed, 2) / 2. + vy * f_elapsed + y };
-
-    Coord_d F{ 0, -1. * _fire * power };
-    Coord_d P1{ 0, _height };
-    Coord_d P2{ _base / 2.f, 0 };
-    Coord_d P3{ -_base / 2.f, 0 };
-
-    const double angle_rad{ angle * _PI / 180. };
-    const double c{ cos(angle_rad) };
-    const double s{ sin(angle_rad) };
-
-    applyRotation(F, c, s);
-    applyRotation(P1, c, s);
-    applyRotation(P2, c, s);
-    applyRotation(P3, c, s);
-
-    GL_rocket_buffer_data[0] = static_cast<GLfloat>(P1.x + l_x);
-    GL_rocket_buffer_data[1] = static_cast<GLfloat>(P1.y + l_y);
-    GL_rocket_buffer_data[3] = static_cast<GLfloat>(P2.x + l_x);
-    GL_rocket_buffer_data[4] = static_cast<GLfloat>(P2.y + l_y);
-    GL_rocket_buffer_data[6] = static_cast<GLfloat>(P3.x + l_x);
-    GL_rocket_buffer_data[7] = static_cast<GLfloat>(P3.y + l_y);
-    GL_fire_buffer_data[0] = static_cast<GLfloat>(l_x);
-    GL_fire_buffer_data[1] = static_cast<GLfloat>(l_y);
-    GL_fire_buffer_data[3] = static_cast<GLfloat>(F.x + l_x);
-    GL_fire_buffer_data[4] = static_cast<GLfloat>(F.y + l_y);
-
-    // From [0, _w] x [0, _h] to [-1, 1] x [-1, 1]
-    GL_rocket_buffer_data[0] = 2.f * GL_rocket_buffer_data[0] / _w - 1.f;
-    GL_rocket_buffer_data[1] = 2.f * GL_rocket_buffer_data[1] / _h - 1.f;
-    GL_rocket_buffer_data[3] = 2.f * GL_rocket_buffer_data[3] / _w - 1.f;
-    GL_rocket_buffer_data[4] = 2.f * GL_rocket_buffer_data[4] / _h - 1.f;
-    GL_rocket_buffer_data[6] = 2.f * GL_rocket_buffer_data[6] / _w - 1.f;
-    GL_rocket_buffer_data[7] = 2.f * GL_rocket_buffer_data[7] / _h - 1.f;
-    GL_fire_buffer_data[0] = 2.f * GL_fire_buffer_data[0] / _w - 1.f;
-    GL_fire_buffer_data[1] = 2.f * GL_fire_buffer_data[1] / _h - 1.f;
-    GL_fire_buffer_data[3] = 2.f * GL_fire_buffer_data[3] / _w - 1.f;
-    GL_fire_buffer_data[4] = 2.f * GL_fire_buffer_data[4] / _h - 1.f;
 }
 
   /*******************************/
@@ -191,4 +137,58 @@ void Rocket::debug(const double f_timeSec) const
 bool Rocket::isParamSuccess() const
 {
     return abs(angle) <= 15 && abs(vy) <= 40 && abs(vx) <= 20;
+}
+
+
+  /*******************************/
+ /*       OpenGL Buffers        */
+/*******************************/
+void updateBuffers(const Rocket& f_rocket, const double f_elapsed, GLfloat* GL_rocket_buffer_data, GLfloat* GL_fire_buffer_data)
+{
+    assert(0 <= f_elapsed <= 1);
+
+    /* Formulas:
+    *    pos.x = acc.x * t^2 / 2 + vx0 * t + x0
+    *    pos.y = acc.y * t^2 / 2 + vy0 * t + y0
+    */
+
+    const double x{ f_rocket.ax * std::pow(f_elapsed, 2) / 2. + f_rocket.vx * f_elapsed + f_rocket.x };
+    const double y{ f_rocket.ay * std::pow(f_elapsed, 2) / 2. + f_rocket.vy * f_elapsed + f_rocket.y };
+
+    Coord_d F{ 0, -1. * _fire * f_rocket.power };
+    Coord_d P1{ 0, _height };
+    Coord_d P2{ _base / 2.f, 0 };
+    Coord_d P3{ -_base / 2.f, 0 };
+
+    const double angle_rad{ f_rocket.angle * _PI / 180. };
+    const double c{ cos(angle_rad) };
+    const double s{ sin(angle_rad) };
+
+    applyRotation(F, c, s);
+    applyRotation(P1, c, s);
+    applyRotation(P2, c, s);
+    applyRotation(P3, c, s);
+
+    GL_rocket_buffer_data[0] = static_cast<GLfloat>(P1.x + x);
+    GL_rocket_buffer_data[1] = static_cast<GLfloat>(P1.y + y);
+    GL_rocket_buffer_data[3] = static_cast<GLfloat>(P2.x + x);
+    GL_rocket_buffer_data[4] = static_cast<GLfloat>(P2.y + y);
+    GL_rocket_buffer_data[6] = static_cast<GLfloat>(P3.x + x);
+    GL_rocket_buffer_data[7] = static_cast<GLfloat>(P3.y + y);
+    GL_fire_buffer_data[0] = static_cast<GLfloat>(x);
+    GL_fire_buffer_data[1] = static_cast<GLfloat>(y);
+    GL_fire_buffer_data[3] = static_cast<GLfloat>(F.x + x);
+    GL_fire_buffer_data[4] = static_cast<GLfloat>(F.y + y);
+
+    // From [0, _w] x [0, _h] to [-1, 1] x [-1, 1]
+    GL_rocket_buffer_data[0] = 2.f * GL_rocket_buffer_data[0] / _w - 1.f;
+    GL_rocket_buffer_data[1] = 2.f * GL_rocket_buffer_data[1] / _h - 1.f;
+    GL_rocket_buffer_data[3] = 2.f * GL_rocket_buffer_data[3] / _w - 1.f;
+    GL_rocket_buffer_data[4] = 2.f * GL_rocket_buffer_data[4] / _h - 1.f;
+    GL_rocket_buffer_data[6] = 2.f * GL_rocket_buffer_data[6] / _w - 1.f;
+    GL_rocket_buffer_data[7] = 2.f * GL_rocket_buffer_data[7] / _h - 1.f;
+    GL_fire_buffer_data[0] = 2.f * GL_fire_buffer_data[0] / _w - 1.f;
+    GL_fire_buffer_data[1] = 2.f * GL_fire_buffer_data[1] / _h - 1.f;
+    GL_fire_buffer_data[3] = 2.f * GL_fire_buffer_data[3] / _w - 1.f;
+    GL_fire_buffer_data[4] = 2.f * GL_fire_buffer_data[4] / _h - 1.f;
 }

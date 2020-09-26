@@ -3,8 +3,6 @@
 
 #include <GL/glew.h>
 
-#include <Utils.hpp>
-
 extern const float _w;
 extern const float _h;
 
@@ -16,8 +14,6 @@ public:
     void init(const Rocket& f_rocket);
 
     void updateFuel();
-
-    void updateBuffers(const double f_elapsed);
 
     void updateAngleAndPower(const std::int8_t f_angle, const std::int8_t f_power);
 
@@ -41,9 +37,8 @@ public:
     int fuel;
     bool isAlive;
     int floor_id_crash;
-
-    GLfloat GL_rocket_buffer_data[9];
-    GLfloat GL_fire_buffer_data[6];
 };
+
+void updateBuffers(const Rocket& f_rocket, const double f_elapsed, GLfloat* GL_rocket_buffer_data, GLfloat* GL_fire_buffer_data);
 
 #endif
