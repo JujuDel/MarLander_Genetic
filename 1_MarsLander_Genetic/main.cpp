@@ -299,17 +299,6 @@ int main()
     std::cout << "Gene: " << idxGene << std::endl << std::endl;
 
     Chromosome* chromosome{ population.getChromosome(idxChromosome) };
-    chromosome->chromosome[0].angle += population.rocket_save.angle;
-    chromosome->chromosome[0].power += population.rocket_save.power;
-    chromosome->chromosome[0].angle = min(static_cast<std::int8_t>(90), max(static_cast<std::int8_t>(-90), chromosome->chromosome[0].angle));
-    chromosome->chromosome[0].power = min(static_cast<std::int8_t>(4), max(static_cast<std::int8_t>(0), chromosome->chromosome[0].power));
-    for (int gen = 1; gen < _CHROMOSOME_SIZE; ++gen)
-    {
-        chromosome->chromosome[gen].angle += chromosome->chromosome[gen - 1].angle;
-        chromosome->chromosome[gen].power += chromosome->chromosome[gen - 1].power;
-        chromosome->chromosome[gen].angle = min(static_cast<std::int8_t>(90), max(static_cast<std::int8_t>(-90), chromosome->chromosome[gen].angle));
-        chromosome->chromosome[gen].power = min(static_cast<std::int8_t>(4), max(static_cast<std::int8_t>(0), chromosome->chromosome[gen].power));
-    }
     chromosome->chromosome[idxGene - 2].angle = 0;
     chromosome->chromosome[idxGene - 1].angle = 0;
 
@@ -327,8 +316,8 @@ int main()
             0.f, 0.f, 0.f
         };
 
-        const int number_loop_within_1_sec{ 20 };
-        double number_loop{ 0 };
+        const int number_loop_within_1_sec{ 10 };
+        double number_loop{ 1 };
         int number_second{ 0 };
         do
         {
