@@ -13,11 +13,7 @@ public:
 
     void init(const Rocket& f_rocket);
 
-    void updateFuel();
-
-    void updateAngleAndPower(const std::int8_t f_angle, const std::int8_t f_power);
-
-    void updateAccSpeedPos();
+    void updateRocket(const std::int8_t f_angle, const std::int8_t f_power);
 
     void debug(const double f_timeSec = -1.) const;
 

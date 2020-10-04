@@ -55,6 +55,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 int main()
 {
+    srand(1);
+
     const int size_level{ size_level1 };
     const int* level{ level1 };
     GeneticPopulation population(rocket1, level, size_level);
@@ -173,9 +175,7 @@ int main()
                 {
                     Gene* gene{ population.getChromosome(chrom)->getGene(gen) };
 
-                    rocket->updateAngleAndPower(gene->angle, gene->power);
-                    rocket->updateFuel();
-                    rocket->updateAccSpeedPos();
+                    rocket->updateRocket(gene->angle, gene->power);
 
                     const Line_d prev_curr{ {rocket->pX, rocket->pY}, {rocket->x, rocket->y} };
                     for (int k = 1; k < size_level; ++k)
@@ -301,8 +301,6 @@ int main()
     std::cout << "Gene: " << idxGene << std::endl << std::endl;
 
     Chromosome* chromosome{ population.getChromosome(idxChromosome) };
-    chromosome->chromosome[idxGene - 2].angle = 0;
-    chromosome->chromosome[idxGene - 1].angle = 0;
 
 #ifdef VISUALIZE_RESULT
     if (solutionFound)
@@ -318,9 +316,10 @@ int main()
             0.f, 0.f, 0.f
         };
 
-        const int number_loop_within_1_sec{ 10 };
+        const int number_loop_within_1_sec{ 2 };
         double number_loop{ 1 };
         int number_second{ 0 };
+        rocket.debug();
         do
         {
             // Clear the screen.
@@ -349,24 +348,30 @@ int main()
             {
                 if (number_loop >= number_loop_within_1_sec)
                 {
-                    rocket.debug(number_second);
                     number_loop = 0;
 
-                    rocket.updateAngleAndPower(chromosome->getGene(number_second)->angle, chromosome->getGene(number_second)->power);
+                    rocket.debug(number_second);
 
-                    rocket.updateFuel();
-                    rocket.updateAccSpeedPos();
+                    rocket.updateRocket(chromosome->getGene(number_second)->angle, chromosome->getGene(number_second)->power);
 
+                    std::cout << "  Request: " << (int)rocket.angle << " " << (int)rocket.power << std::endl << std::endl;
+
+                    rocket.debug();
                     number_second++;
                 }
 
                 number_loop++;
                 updateBuffers(rocket, number_loop / number_loop_within_1_sec, GL_rocket_buffer_data, GL_fire_buffer_data);
-                if (checkCollision(&GL_rocket_buffer_data[0], 9, &floor_buffer_data[0], 3 * (2 * (size_level - 1))))
+                const Line_d prev_curr{ {rocket.pX, rocket.pY}, {rocket.x, rocket.y} };
+                for (int k = 1; k < size_level; ++k)
                 {
-                    rocket.isAlive = false;
+                    const Line_d floor{ {level[2 * (k - 1)], level[2 * (k - 1) + 1]}, {level[2 * k], level[2 * k + 1]} };
+                    if (rocket.x < 0 || rocket.x > _w || rocket.y < 0 || rocket.y > _h || isIntersect(prev_curr, floor))
+                    {
+                        rocket.isAlive = false;
+                        break;
+                    }
                 }
-
             } // endif _pause && collision
 
             glUseProgram(programIDRocket);

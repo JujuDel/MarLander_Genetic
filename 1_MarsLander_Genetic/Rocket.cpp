@@ -57,19 +57,19 @@ void Rocket::init(const Rocket& f_rocket)
 }
 
   /*******************************/
- /*         UpdateFuel          */
+ /*        UpdateRocket         */
 /*******************************/
-void Rocket::updateFuel()
-{
-    fuel = std::max(0, fuel - power);
-}
 
-  /*******************************/
- /*        UpdateTarget         */
-/*******************************/
-void Rocket::updateAngleAndPower(const std::int8_t f_angle, const std::int8_t f_power)
+void Rocket::updateRocket(const std::int8_t f_angle, const std::int8_t f_power)
 {
+    // Previous position
+    pX = x;
+    pY = y;
+
+    // Update angle and power
+
     angle = std::min(static_cast<std::int8_t>(90), std::max(static_cast<std::int8_t>(-90), static_cast<std::int8_t>(angle + f_angle)));
+    const double angle_rad{ -angle * _PI / 180. };
 
     if (fuel == 0)
     {
@@ -79,14 +79,12 @@ void Rocket::updateAngleAndPower(const std::int8_t f_angle, const std::int8_t f_
     {
         power = std::min(static_cast<std::int8_t>(4), std::max(static_cast<std::int8_t>(0), static_cast<std::int8_t>(power + f_power)));
     }
-}
 
-  /*******************************/
- /*      Reset AccSpeedPos      */
-/*******************************/
-void Rocket::updateAccSpeedPos()
-{
-    /* Formulas:
+    // Update fuel
+
+    fuel = std::max(0, fuel - power);
+
+    /* Update Acc, speed and position:
     *    acc.x = power * sin(-angle)
     *    acc.y = power * cos(angle) + _g
     *
@@ -98,10 +96,9 @@ void Rocket::updateAccSpeedPos()
     *
     *    with t = 1 !
     */
-    pX = x;
-    pY = y;
 
-    const double angle_rad{ -angle * _PI / 180. };
+    ax = power * sin(angle_rad);
+    ay = power * cos(angle_rad) + _g;
 
     x += 0.5 * ax + vx;
     y += 0.5 * ay + vy;
@@ -109,9 +106,6 @@ void Rocket::updateAccSpeedPos()
 
     vx += ax;
     vy += ay;
-
-    ax = power * sin(angle_rad);
-    ay = power * cos(angle_rad) + _g;
 }
 
   /*******************************/
