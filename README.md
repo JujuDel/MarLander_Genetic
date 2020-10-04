@@ -42,12 +42,16 @@ For a landing to be successful, the ship must:
 Using modern OpenGL for the visualization, the first step was to simulate the Mars environment and the evolution of the ship's position, velocity and acceleration.
 
 By just letting the ship falling with and without initial horizontal velocity and comparing with CodinGame, it ensures proper application of basic physics:
+
 Without initial horizontal velocity | With initial horizontal velocity
 :---: | :---:
 ![level1_falling](data/gif/level1_falling.gif) | ![level2_falling](data/gif/level2_falling.gif)
 
 Then manually adding rotation and thrust power requests, and comparing with CodinGame, it ensures proper application of the overall problem's physics:
-![level1_landing](data/gif/level1_landing.gif)
+
+With rotation and thrust power requests |
+:---: |
+![level1_landing](data/gif/level1_landing.gif) |
 
 We are now ready to go with the Genetic Algorithm!
 
