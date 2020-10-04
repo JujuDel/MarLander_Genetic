@@ -1,5 +1,4 @@
 
-
 # MarLander - Genetic Algorithm
 
 Resolve the series of CodinGame's problem called Mars Lander using a Genetic Algorithm.
@@ -16,7 +15,23 @@ Solution developed in ***C++*** and using ***modern OpenGL*** for the visualizat
 
 ## How-to compile and use
 
+This project uses CMake and this how-to shows how-to use it with Visual Studio.
 
+1) Launch your CMake-gui application
+2) *"Where is the source code:"* is the current repo
+3) *"Where to build the binaries:"* is usually a build folder in the current repo
+4) Press *"Configure"* and then *"Generate"*
+5) Close your CMake-gui application and launch the *"MarsLander_Genetic.sln"* in the build folder
+
+![cmake](data/images/cmake.png)
+
+Then, under Visual Studio:
+
+1) Build -> Build Solution (once done you can play around with OpenGL with the project cube3D, my *Hello World* to check that everything is fine)
+2) On the *"Solution Explorer"* tab, right click on the *"MarsLander_Genetic"* project then *"Set as Startup Project"*
+3) Line 60 to 62, you can modify the initialization of the variables *"size_level"*, *"level"* and *"population"* to play around with different levels, available in *"levels.hpp"*
+
+![visualStudio](data/images/visualStudio.png)
 
 ## Statements of the problem
 
@@ -57,3 +72,9 @@ We are now ready to go with the Genetic Algorithm!
 
 ## Genetic Algorithm
 
+Doc / dev - ongoing
+
+Selection -> Roulette Wheel
+Crossover -> Weighted sum of the parents
+Mutation -> classiq mutation
+Elitism
