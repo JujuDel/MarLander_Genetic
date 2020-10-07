@@ -72,12 +72,65 @@ We are now ready to go with the Genetic Algorithm!
 
 ## Genetic Algorithm
 
-Doc / dev - ongoing
+#### Architecture
 
-Selection -> Roulette Wheel
+The architecture is as follow:
 
-Crossover -> Weighted sum of the parents
+```cpp
+struct Gene {
+    std::int8_t angle;
+    std::int8_t power;
+};
 
-Mutation -> classiq mutation
+struct Chromosome {
+    Gene chromosome[_CHROMOSOME_SIZE];
+    double fitness;
+};
 
-Elitism
+/* Population class:
+*
+* Contains two arrays of population to optimize the run-time performances.
+* The two pointers 'population' and 'new_population' will alternatively point to 'populationA' and 'populationB'.
+* In that way, we reduce the amount of memory allocation/de-allocation and just stick with memory access.
+*/
+class Population {
+public:
+	GeneticPopulation();
+
+	// Fill the next population by performing elitism, selection, crossover and mutation.
+	void mutate();
+
+private:
+    Chromosome populationA[_POPULATION_SIZE];	//!< One population of chromosomes
+    Chromosome populationB[_POPULATION_SIZE];	//!< Another one
+
+    Chromosome* population; 	//!< Ptr to the current population
+    Chromosome* new_population;	//!< Ptr to the next population
+}
+```
+
+#### Fitness
+
+TODO
+
+#### Selection
+
+The selection is done using ***Fitness proportionate selection*** (also known as *roulette wheel*):
+
+![fitnessSelection](data/images/Fitness_proportionate_selection.png)
+
+#### Crossover
+
+The crossover is a weighted average sum.
+
+Given two parents $P_1= [Gp^1_1, Gp^1_2, ..., Gp^1_n]$ and $P_2= [Gp^2_1, Gp^2_2, ..., Gp^2_n]$, the creation of two children $C_1=[Gc^1_1, Gc^1_2, ..., Gc^1_n]$ and $C_2=[Gc^2_1, Gc^2_2, ..., Gc^2_n]$ is done as follow:
+
+For every pair of genes $(Gp^1_i, Gp^2_i)$, take a random number $r \in [0, 1]$ and then:
+ - $Gc^1_i = r * Gp^1_i + (1-r) * Gp^2_i$
+ - $Gc^2_i = (1 - r) * Gp^1_i + r * Gp^2_i$
+
+#### Mutation and Elitism
+
+For every children, each gene has 1% chance of mutating.
+
+The top 10% of the parents is automatically copied, as it, in the next generation.
