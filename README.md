@@ -89,16 +89,16 @@ struct Chromosome {
 
 /* Population class:
 *
-* Contains two arrays of population to optimize the run-time performances.
+* Contain two arrays of population to optimize the run-time performances.
 * The two pointers 'population' and 'new_population' will alternatively point to 'populationA' and 'populationB'.
 * In that way, we reduce the amount of memory allocation/de-allocation and just stick with memory access.
 */
 class Population {
 public:
-	GeneticPopulation();
+    GeneticPopulation();
 
-	// Fill the next population by performing elitism, selection, crossover and mutation.
-	void mutate();
+    // Fill the next population by performing elitism, selection, crossover and mutation.
+    void mutate();
 
 private:
     Chromosome populationA[_POPULATION_SIZE];	//!< One population of chromosomes
@@ -117,17 +117,21 @@ TODO
 
 The selection is done using ***Fitness proportionate selection*** (also known as *roulette wheel*):
 
-![fitnessSelection](data/images/Fitness_proportionate_selection.png)
+![fitnessSelection](data/images/fitness_proportionate_selection.png)
 
 #### Crossover
 
-The crossover is a weighted average sum.
+The crossover is a weighted average sum:
 
-Given two parents $P_1= [Gp^1_1, Gp^1_2, ..., Gp^1_n]$ and $P_2= [Gp^2_1, Gp^2_2, ..., Gp^2_n]$, the creation of two children $C_1=[Gc^1_1, Gc^1_2, ..., Gc^1_n]$ and $C_2=[Gc^2_1, Gc^2_2, ..., Gc^2_n]$ is done as follow:
+![crossover](data/images/crossover.png)
+
+<!-- Given two parents $P_1=[Gp^1_1, Gp^1_2, ..., Gp^1_n]$ and $P_2=[Gp^2_1, Gp^2_2, ..., Gp^2_n]$, the creation of two children $C_1$ and $C_2$  is done as follow:
 
 For every pair of genes $(Gp^1_i, Gp^2_i)$, take a random number $r \in [0, 1]$ and then:
  - $Gc^1_i = r * Gp^1_i + (1-r) * Gp^2_i$
  - $Gc^2_i = (1 - r) * Gp^1_i + r * Gp^2_i$
+
+At the end, you obtain $C_1=[Gc^1_1, Gc^1_2, ..., Gc^1_n]$ and $C_2=[Gc^2_1, Gc^2_2, ..., Gc^2_n]$. -->
 
 #### Mutation and Elitism
 
