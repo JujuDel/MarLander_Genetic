@@ -139,23 +139,28 @@ double distance(const Rocket& rocket, const int* floor_buffer, const int landing
     return 1000. / (1. + 0.009999 * dist);
 }
 
-/*
-    fx(0)   = 3.3653846153846
-    fx(40)  = 0
-    fx(200) = -25
-    fx(300) = -50
-
-    fy(0)   = 1.1904761904762
-    fy(25)  = 0
-    fy(200) = -25
-    fy(300) = -50
+/* Horizontal speed: s >= 0 in m/s-1
+*   f(s) = 0.00036057692307692 * s^2 + 0.069711538461538 * s - 3.3653846153846
+*
+* f(0)   = 3.3653846153846
+* f(40)  = 0
+* f(200) = -25
+* f(300) = -50
+*
+*  Vertical speed: s >= 0 in m/s-1
+*   f(s) = 0.0003968253968254 * s^2 + 0.051587301587302 * s - 1.1904761904762
+*
+* fy(0)   = 1.1904761904762
+* fy(25)  = 0
+* f(200) = -25
+* f(300) = -50
 */
 double speed(const double vx, const double vy)
 {
     double scoreX = 0.00036057692307692 * vx * vx + 0.069711538461538 * vx - 3.3653846153846;
     double scoreY = 0.0003968253968254 * vy * vy + 0.051587301587302 * vy - 1.1904761904762;
 
-    return -(scoreX + scoreY);
+    return -5. * (scoreX + scoreY);
 }
 
 void GeneticPopulation::mutate()
@@ -173,10 +178,11 @@ void GeneticPopulation::mutate()
             population[i].fitness = distance(rockets_gen[i], floor_buffer, landing_zone_id);
         }
 
-        if (false && rockets_gen[i].floor_id_crash == landing_zone_id)
+        if (rockets_gen[i].floor_id_crash == landing_zone_id)
         {
-            population[i].fitness += speed(rockets_gen[i].vx, rockets_gen[i].vy);
+            population[i].fitness += speed(abs(rockets_gen[i].vx), abs(rockets_gen[i].vy));
         }
+
         sum_fitness += population[i].fitness;
     }
 
@@ -186,7 +192,6 @@ void GeneticPopulation::mutate()
     double cum_sum{ 0. };
     for (int i = _POPULATION_SIZE - 1; i >= 0; --i)
     {
-        std::cout << population[i].fitness << std::endl;
         population[i].fitness = cum_sum + population[i].fitness / sum_fitness;
         cum_sum = population[i].fitness;
     }
