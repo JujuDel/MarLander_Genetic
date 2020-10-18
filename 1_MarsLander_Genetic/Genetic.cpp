@@ -53,7 +53,6 @@ GeneticPopulation::GeneticPopulation(const Rocket& f_rocket, const int* f_floor_
         // Statements constraints: Only 1 landing zone
         if (floor_buffer[2 * (i - 1) + 1] == floor_buffer[2 * i + 1])
         {
-            std::cout << "LANDING=" << i << std::endl;
             landing_zone_id = i;
             break;
         }
@@ -88,6 +87,15 @@ Rocket* GeneticPopulation::getRocket(const std::uint8_t i)
     return nullptr;
 }
 
+/* f(d) = 1000. / (1 + 0.009999 * d)
+*
+* f(0)      = 1000.000
+* f(10)     =  909.099
+* f(100)    =  500.025
+* f(1000)   =   90.917
+* f(10000)  =    9.902
+* f(100000) =    0.999
+*/
 double distance(const Rocket& rocket, const int* floor_buffer, const int landing_zone_id)
 {
     if (rocket.floor_id_crash == -1)
@@ -128,7 +136,26 @@ double distance(const Rocket& rocket, const int* floor_buffer, const int landing
                 pow(static_cast<double>(floor_buffer[2 * (k - 1) + 1]) + floor_buffer[2 * k + 1], 2));
         }
     }
-    return 1. / (0.02 + 0.001 * dist); // dist = 0 -> return 25
+    return 1000. / (1. + 0.009999 * dist);
+}
+
+/*
+    fx(0)   = 3.3653846153846
+    fx(40)  = 0
+    fx(200) = -25
+    fx(300) = -50
+
+    fy(0)   = 1.1904761904762
+    fy(25)  = 0
+    fy(200) = -25
+    fy(300) = -50
+*/
+double speed(const double vx, const double vy)
+{
+    double scoreX = 0.00036057692307692 * vx * vx + 0.069711538461538 * vx - 3.3653846153846;
+    double scoreY = 0.0003968253968254 * vy * vy + 0.051587301587302 * vy - 1.1904761904762;
+
+    return -(scoreX + scoreY);
 }
 
 void GeneticPopulation::mutate()
@@ -146,10 +173,9 @@ void GeneticPopulation::mutate()
             population[i].fitness = distance(rockets_gen[i], floor_buffer, landing_zone_id);
         }
 
-        if (rockets_gen[i].floor_id_crash == landing_zone_id)
+        if (false && rockets_gen[i].floor_id_crash == landing_zone_id)
         {
-            population[i].fitness -= abs(rockets_gen[i].vx) / 8.;
-            population[i].fitness -= abs(rockets_gen[i].vy) / 8.;
+            population[i].fitness += speed(rockets_gen[i].vx, rockets_gen[i].vy);
         }
         sum_fitness += population[i].fitness;
     }
@@ -160,6 +186,7 @@ void GeneticPopulation::mutate()
     double cum_sum{ 0. };
     for (int i = _POPULATION_SIZE - 1; i >= 0; --i)
     {
+        std::cout << population[i].fitness << std::endl;
         population[i].fitness = cum_sum + population[i].fitness / sum_fitness;
         cum_sum = population[i].fitness;
     }
