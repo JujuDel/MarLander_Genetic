@@ -72,7 +72,7 @@ We are now ready to go with the Genetic Algorithm!
 
 ## Genetic Algorithm
 
-#### Architecture
+### Architecture
 
 The architecture is as follow:
 
@@ -109,17 +109,49 @@ private:
 }
 ```
 
-#### Fitness
+### Fitness
 
-TODO
+#### Step 1: The closer from the landing zone, the better!
 
-#### Selection
+A good metric to have a higher score when you are closer is the inverse of the distance: `f(x) = 1 / x`.
+
+However, accordingly to your use cases distribution, it might work or not. Let's then generalize it a bit try to find the best score function with our data:
+
+ - The score will be something like `f(x) = a / (b + c * x)`,
+ - Let's find `a`, `b` and `c`.
+ 
+By running a good number of random parameters on all the cases and measuring the distance between the crash zones and the landing zones, we can see that the distances vary from `0 meter` to almost `100 000 meters`. Watching at the diversity, let's define `n points` with the score that *would represent how good they are*. Thanks to those `n points`, one can easily compute the `a`, `b` and `c` that fits them the best.
+
+In my case, I found that `f(x) = 1000 / (1 + 0.009999 * x)` works well, with its scores in the range `]0, 1000]`.
+
+#### Step 2: Once on the landing zone, penalize fast landers!
+
+Here, we can take into account the speed of the landers within the score calculus in two cases:
+
+ 1. Always.
+ 2. Only for the landers which crashed into the landing zone.
+
+And to take into account the speed, two strategies are possible:
+
+ 1. The lower the speed is, the more we increase the score.
+ 2. The higher the speed is, the more we penalize the score.
+
+I decided to **penalized the fast landers which crashed into the landing zone**. In that way, landers who crashed close to the landing zone could still have a good chance of being selected as parents.
+
+Here, I thought about using two quadratics function (one for the vertical speed and one the horizontal speed): we are looking for `fx(vx) = ax * vx^2 + bx * vx + cx` and `fy(vy) = ay * vy^2 + by * vy + cy`.
+
+As before, by watching at the data on random examples, by selecting a few points and by computing the best parameters:
+
+ - Horizontal speed penality: `fx(vx) = 0.00036057692307692 * vx^2 + 0.069711538461538 * vx - 3.3653846153846`
+ - Vertical speed penality: `fy(vy) = 0.0003968253968254 * vy^2 + 0.051587301587302 * vy - 1.1904761904762`
+
+### Selection
 
 The selection is done using ***Fitness proportionate selection*** (also known as *roulette wheel*):
 
 ![fitnessSelection](data/images/fitness_proportionate_selection.png)
 
-#### Crossover
+### Crossover
 
 The crossover is a weighted average sum:
 
@@ -133,7 +165,7 @@ For every pair of genes $(Gp^1_i, Gp^2_i)$, take a random number $r \in [0, 1]$ 
 
 At the end, you obtain $C_1=[Gc^1_1, Gc^1_2, ..., Gc^1_n]$ and $C_2=[Gc^2_1, Gc^2_2, ..., Gc^2_n]$. -->
 
-#### Mutation and Elitism
+### Mutation and Elitism
 
 For every children, each gene has 1% chance of mutating.
 
