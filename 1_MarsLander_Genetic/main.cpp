@@ -181,11 +181,11 @@ int main()
         generation++;
         population.initRockets();
 
-        // For every possible moves, i.e., for every genes
-        for (int gen = 0; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen)
+        // For every Rocket and their associated chromosome
+        for (int chrom = 0; !solutionFound && chrom < _POPULATION_SIZE; ++chrom)
         {
-            // For every Rocket and their associated chromosome
-            for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom)
+            // For every possible moves, i.e., for every genes
+            for (int gen = 0; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen)
             {
                 Rocket* rocket{ population.getRocket(chrom) };
                 if (rocket->isAlive)
@@ -245,6 +245,11 @@ int main()
                         rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 4] = rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1];
                         rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 5] = 0.f;
                     }
+#else
+                }
+                else
+                {
+                    break;
 #endif
                 }
             }
