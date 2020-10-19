@@ -9,8 +9,8 @@
 // Include GLEW
 #include <GL/glew.h>
 
-#include <Utils.hpp>
-#include <Rocket.hpp>
+#include "Utils.hpp"
+#include "Rocket.hpp"
 
 static const double _g{ -3.711 }; // m/s-2
 static const int _base{ 100 };

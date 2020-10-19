@@ -5,7 +5,7 @@
 
 #include <GL/glew.h>
 
-#include <Utils.hpp>
+#include "Utils.hpp"
 
 void applyRotation(Coord_d& P, const double c, const double s)
 {

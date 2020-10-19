@@ -1,9 +1,7 @@
 #ifndef GENETIC_HPP
 #define GENETIC_HPP
 
-#include <vector>
-
-#include <Rocket.hpp>
+#include "Rocket.hpp"
 
 static const int _CHROMOSOME_SIZE{ 200 };
 static const int _POPULATION_SIZE{ 100 };

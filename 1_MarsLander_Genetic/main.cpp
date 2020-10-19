@@ -144,7 +144,7 @@ int initOpenGL(GLuint& VertexArrayID, GLuint& programIDFloor, GLuint& programIDL
 
 int main()
 {
-    srand(1);
+    srand(time(NULL));
 
     // Rocket, level and size_level are defined in `level.hpp`
     GeneticPopulation population(rocket, level, size_level);

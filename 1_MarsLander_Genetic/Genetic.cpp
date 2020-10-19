@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include <Genetic.hpp>
+#include "Genetic.hpp"
 
   /*******************************/
  /*            Gene             */
@@ -265,5 +265,4 @@ void GeneticPopulation::mutate()
     Chromosome* tmp = population;
     population = new_population;
     new_population = tmp;
-
 }
