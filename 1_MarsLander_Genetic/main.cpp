@@ -169,6 +169,9 @@ int main()
 
     std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
 
+    std::chrono::steady_clock::time_point start_loop{ std::chrono::steady_clock::now() };
+    int idxStart{ 0 };
+
 #ifdef VISUALIZE_GENETIC
     while (!solutionFound && !_close && glfwWindowShouldClose(window) == 0)
 #else
@@ -178,6 +181,24 @@ int main()
 #ifdef VISUALIZE_GENETIC
         std::cout << "Generation " << generation << std::endl;
 #endif
+
+        std::chrono::duration<double> elapsed_seconds{ std::chrono::steady_clock::now() - start_loop };
+        if (elapsed_seconds.count() > 0.15)
+        {
+            Gene* bestGen{ population.getChromosome(0)->getGene(idxStart) };
+
+            std::cerr << "Approx done at generation " << generation << std::endl;
+            std::cerr << "Idx: " << idxStart << std::endl;
+            std::cerr << "  Angle: " << (int)bestGen->angle << std::endl;
+            std::cerr << "  Power: " << (int)bestGen->power << std::endl;
+
+            population.rocket_save.updateRocket(bestGen->angle, bestGen->power);
+            std::cout << (int)population.rocket_save.angle << " " << (int)population.rocket_save.power << std::endl;
+
+            idxStart++;
+            start_loop = std::chrono::steady_clock::now();
+        }
+
         generation++;
         population.initRockets();
 
@@ -185,7 +206,7 @@ int main()
         for (int chrom = 0; !solutionFound && chrom < _POPULATION_SIZE; ++chrom)
         {
             // For every possible moves, i.e., for every genes
-            for (int gen = 0; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen)
+            for (int gen = idxStart; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen)
             {
                 Rocket* rocket{ population.getRocket(chrom) };
                 if (rocket->isAlive)
@@ -255,7 +276,7 @@ int main()
             }
         }
         if (!solutionFound)
-            population.mutate();
+            population.mutate(idxStart);
         else
             break;
 

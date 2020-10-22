@@ -3,7 +3,7 @@
 
 #include "Rocket.hpp"
 
-static const int _CHROMOSOME_SIZE{ 200 };
+static const int _CHROMOSOME_SIZE{ 100 };
 static const int _POPULATION_SIZE{ 100 };
 
 static const double _ELITISM_RATIO{ 0.1 };
@@ -24,7 +24,7 @@ public:
 class Chromosome
 {
 public:
-    Chromosome();
+    Chromosome(const int f_angle = 0, const int f_power = 0);
 
     double fitness;
 
@@ -45,9 +45,9 @@ public:
     Chromosome* getChromosome(const std::uint8_t i);
     Rocket* getRocket(const std::uint8_t i);
 
-    void mutate();
+    void mutate(const int idxStart);
 
-    const Rocket rocket_save;
+    Rocket rocket_save;
 
     int landing_zone_id; // ID of the landing_zone among the floor segments
 

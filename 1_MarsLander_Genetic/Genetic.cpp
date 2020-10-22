@@ -15,12 +15,28 @@ Gene::Gene(const std::int8_t f_angle, const std::int8_t f_power) :
   /*******************************/
  /*         Chromosome          */
 /*******************************/
-Chromosome::Chromosome() :
+
+std::int8_t getRandAngle(const int f_angle)
+{
+    const int maxRand{ std::min(90 - f_angle, 15) + std::min(f_angle + 90, 15) + 1 };
+
+    return static_cast<std::int8_t>(rand() % maxRand - std::min(f_angle + 90, 15));
+}
+
+std::int8_t getRandPower(const int f_power)
+{
+    const int maxRandPower{ std::min(4 - f_power, 1) + std::min(f_power, 1) + 1 };
+
+    return static_cast<std::int8_t>(rand() % maxRandPower - std::min(f_power, 1));
+}
+
+Chromosome::Chromosome(const int f_angle, const int f_power) :
     fitness{ 0 }
 {
+
     for (int i = 0; i < _CHROMOSOME_SIZE; ++i)
     {
-        chromosome[i] = { rand() % 31 - 15, rand() % 3 - 1 };
+        chromosome[i] = { getRandAngle(f_angle), getRandPower(f_power) };
     }
 }
 
@@ -59,6 +75,10 @@ GeneticPopulation::GeneticPopulation(const Rocket& f_rocket, const int* f_floor_
     }
 
     initRockets();
+    for (int i = 0; i < _POPULATION_SIZE; ++i)
+    {
+        population[i] = Chromosome(rocket_save.angle, rocket_save.power);
+    }
 }
 
 void GeneticPopulation::initRockets()
@@ -163,7 +183,7 @@ double speed(const double vx, const double vy)
     return -5. * (scoreX + scoreY);
 }
 
-void GeneticPopulation::mutate()
+void GeneticPopulation::mutate(const int idxStart)
 {
     double sum_fitness{ 0. };
     // Compute every fitness
@@ -205,19 +225,23 @@ void GeneticPopulation::mutate()
     // Continuous Genetic Algorithm
     for (int i = _ELITISM_IDX; i < _POPULATION_SIZE; i+=2)
     {
-        const double choice1{ rand() / static_cast<double>(RAND_MAX) };
-        int idxParent1{ 1 };
-        for (; idxParent1 < _POPULATION_SIZE; ++idxParent1)
+        int idxParent1{ _POPULATION_SIZE };
+        while (idxParent1 == _POPULATION_SIZE)
         {
-            if (population[idxParent1].fitness < choice1)
+            idxParent1 = 1;
+            const double choice1{ rand() / static_cast<double>(RAND_MAX) };
+            for (; idxParent1 < _POPULATION_SIZE; ++idxParent1)
             {
-                idxParent1--;
-                break;
+                if (population[idxParent1].fitness < choice1)
+                {
+                    idxParent1--;
+                    break;
+                }
             }
         }
 
-        int idxParent2{ idxParent1 };
-        while (idxParent2 == idxParent1)
+        int idxParent2{ _POPULATION_SIZE };
+        while (idxParent2 == idxParent1 || idxParent2 == _POPULATION_SIZE)
         {
             idxParent2 = 1;
             const double choice2{ rand() / static_cast<double>(RAND_MAX) };
@@ -231,7 +255,7 @@ void GeneticPopulation::mutate()
             }
         }
         
-        for (int g = 0; g < _CHROMOSOME_SIZE; ++g)
+        for (int g = idxStart; g < _CHROMOSOME_SIZE; ++g)
         {
             const double r{ rand() / static_cast<double>(RAND_MAX) };
             if (r > _MUTATION_RATE)
@@ -240,6 +264,17 @@ void GeneticPopulation::mutate()
                 const double angleP1 = population[idxParent2].chromosome[g].angle;
                 const double powerP0 = population[idxParent1].chromosome[g].power;
                 const double powerP1 = population[idxParent2].chromosome[g].power;
+
+                if (abs(angleP0) > 15) {
+                    std::cerr << "WTF! 0" << std::endl;
+                    std::cerr << angleP0 << std::endl;
+                    std::cerr << idxParent1 << std::endl;
+                }
+                if (abs(angleP1) > 15) {
+                    std::cerr << "WTF! 1" << std::endl;
+                    std::cerr << angleP1 << std::endl;
+                    std::cerr << idxParent2 << std::endl;
+                }
 
                 new_population[i].chromosome[g].angle = static_cast<std::int8_t>(r * angleP0 + (1 - r) * angleP1);
                 new_population[i].chromosome[g].power = static_cast<std::int8_t>(r * powerP0 + (1 - r) * powerP1);
@@ -251,12 +286,12 @@ void GeneticPopulation::mutate()
             }
             else
             {
-                new_population[i].chromosome[g].angle = rand() % 31 - 15;
-                new_population[i].chromosome[g].power = rand() % 3 - 1;
+                new_population[i].chromosome[g].angle = getRandAngle(rocket_save.angle);
+                new_population[i].chromosome[g].power = getRandPower(rocket_save.power);
                 if (i != _POPULATION_SIZE - 1)
                 {
-                    new_population[i + 1].chromosome[g].angle = rand() % 31 - 15;
-                    new_population[i + 1].chromosome[g].power = rand() % 3 - 1;
+                    new_population[i + 1].chromosome[g].angle = getRandAngle(rocket_save.angle);
+                    new_population[i + 1].chromosome[g].power = getRandPower(rocket_save.power);
                 }
             }
         }
