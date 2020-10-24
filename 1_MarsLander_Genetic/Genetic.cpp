@@ -33,10 +33,13 @@ std::int8_t getRandPower(const int f_power)
 Chromosome::Chromosome(const int f_angle, const int f_power) :
     fitness{ 0 }
 {
-
+    int angle = f_angle;
+    int power = f_power;
     for (int i = 0; i < _CHROMOSOME_SIZE; ++i)
     {
         chromosome[i] = { getRandAngle(f_angle), getRandPower(f_power) };
+        angle += chromosome[i].angle;
+        power += chromosome[i].power;
     }
 }
 
@@ -75,10 +78,7 @@ GeneticPopulation::GeneticPopulation(const Rocket& f_rocket, const int* f_floor_
     }
 
     initRockets();
-    for (int i = 0; i < _POPULATION_SIZE; ++i)
-    {
-        population[i] = Chromosome(rocket_save.angle, rocket_save.power);
-    }
+    initChromosomes();
 }
 
 void GeneticPopulation::initRockets()
@@ -86,6 +86,12 @@ void GeneticPopulation::initRockets()
     for (int i = 0; i < _POPULATION_SIZE; ++i)
     {
         rockets_gen[i].init(rocket_save);
+    }
+}
+
+void GeneticPopulation::initChromosomes() {
+    for (int i = 0; i < _POPULATION_SIZE; ++i) {
+        population[i] = Chromosome(rocket_save.angle, rocket_save.power);
     }
 }
 
@@ -264,17 +270,6 @@ void GeneticPopulation::mutate(const int idxStart)
                 const double angleP1 = population[idxParent2].chromosome[g].angle;
                 const double powerP0 = population[idxParent1].chromosome[g].power;
                 const double powerP1 = population[idxParent2].chromosome[g].power;
-
-                if (abs(angleP0) > 15) {
-                    std::cerr << "WTF! 0" << std::endl;
-                    std::cerr << angleP0 << std::endl;
-                    std::cerr << idxParent1 << std::endl;
-                }
-                if (abs(angleP1) > 15) {
-                    std::cerr << "WTF! 1" << std::endl;
-                    std::cerr << angleP1 << std::endl;
-                    std::cerr << idxParent2 << std::endl;
-                }
 
                 new_population[i].chromosome[g].angle = static_cast<std::int8_t>(r * angleP0 + (1 - r) * angleP1);
                 new_population[i].chromosome[g].power = static_cast<std::int8_t>(r * powerP0 + (1 - r) * powerP1);

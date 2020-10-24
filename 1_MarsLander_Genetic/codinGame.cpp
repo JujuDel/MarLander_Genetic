@@ -201,14 +201,30 @@ public:
 
 /* CHROMOSOME */
 
+std::int8_t getRandAngle(const int f_angle) {
+    const int maxRand{ std::min(90 - f_angle, 15) + std::min(f_angle + 90, 15) + 1 };
+
+    return static_cast<std::int8_t>(rand() % maxRand - std::min(f_angle + 90, 15));
+}
+
+std::int8_t getRandPower(const int f_power) {
+    const int maxRandPower{ std::min(4 - f_power, 1) + std::min(f_power, 1) + 1 };
+
+    return static_cast<std::int8_t>(rand() % maxRandPower - std::min(f_power, 1));
+}
+
 // _CHROMOSOME_SIZE * 2 + 4 bytes
 class Chromosome
 {
 public:
-    Chromosome() : fitness{ 0 }
+    Chromosome(const int f_angle = 0, const int f_power = 0) : fitness{ 0 }
     {
+        int angle = f_angle;
+        int power = f_power;
         for (int i = 0; i < _CHROMOSOME_SIZE; ++i) {
-            chromosome[i] = { std::int8_t(rand() % 31 - 15), std::int8_t(rand() % 3 - 1) };
+            chromosome[i] = { getRandAngle(f_angle), getRandPower(f_power) };
+            angle += chromosome[i].angle;
+            power += chromosome[i].power;
         }
     }
 
@@ -318,11 +334,18 @@ public:
         }
 
         initRockets();
+        initChromosomes();
     }
 
     void initRockets() {
         for (int i = 0; i < _POPULATION_SIZE; ++i) {
             rockets_gen[i].init(rocket_save);
+        }
+    }
+
+    void initChromosomes() {
+        for (int i = 0; i < _POPULATION_SIZE; ++i) {
+            population[i] = Chromosome(rocket_save.angle, rocket_save.power);
         }
     }
 
@@ -340,7 +363,7 @@ public:
         return nullptr;
     }
 
-    void mutate() {
+    void mutate(const int idxStart) {
         double sum_fitness{ 0. };
         // Compute every fitness
         for (int i = 0; i < _POPULATION_SIZE; ++i) {
@@ -375,18 +398,21 @@ public:
 
         // Continuous Genetic Algorithm
         for (int i = _ELITISM_IDX; i < _POPULATION_SIZE; i += 2) {
-            const double choice1{ rand() / static_cast<double>(RAND_MAX) };
-            int idxParent1{ 1 };
-            for (; idxParent1 < _POPULATION_SIZE; ++idxParent1) {
-                if (population[idxParent1].fitness < choice1)
-                {
-                    idxParent1--;
-                    break;
+            int idxParent1{ _POPULATION_SIZE };
+            while (idxParent1 == _POPULATION_SIZE) {
+                idxParent1 = 1;
+                const double choice1{ rand() / static_cast<double>(RAND_MAX) };
+                for (; idxParent1 < _POPULATION_SIZE; ++idxParent1) {
+                    if (population[idxParent1].fitness < choice1)
+                    {
+                        idxParent1--;
+                        break;
+                    }
                 }
             }
 
-            int idxParent2{ idxParent1 };
-            while (idxParent2 == idxParent1) {
+            int idxParent2{ _POPULATION_SIZE };
+            while (idxParent2 == idxParent1 || idxParent2 == _POPULATION_SIZE) {
                 idxParent2 = 1;
                 const double choice2{ rand() / static_cast<double>(RAND_MAX) };
                 for (; idxParent2 < _POPULATION_SIZE; ++idxParent2)
@@ -399,7 +425,7 @@ public:
                 }
             }
 
-            for (int g = 0; g < _CHROMOSOME_SIZE; ++g) {
+            for (int g = idxStart; g < _CHROMOSOME_SIZE; ++g) {
                 const double r{ rand() / static_cast<double>(RAND_MAX) };
                 if (r > _MUTATION_RATE) {
                     const double angleP0 = population[idxParent1].chromosome[g].angle;
@@ -415,11 +441,11 @@ public:
                     }
                 }
                 else {
-                    new_population[i].chromosome[g].angle = rand() % 31 - 15;
-                    new_population[i].chromosome[g].power = rand() % 3 - 1;
+                    new_population[i].chromosome[g].angle = getRandAngle(rocket_save.angle);
+                    new_population[i].chromosome[g].power = getRandAngle(rocket_save.power);
                     if (i != _POPULATION_SIZE - 1) {
-                        new_population[i + 1].chromosome[g].angle = rand() % 31 - 15;
-                        new_population[i + 1].chromosome[g].power = rand() % 3 - 1;
+                        new_population[i + 1].chromosome[g].angle = getRandAngle(rocket_save.angle);
+                        new_population[i + 1].chromosome[g].power = getRandAngle(rocket_save.power);
                     }
                 }
             }
@@ -430,7 +456,7 @@ public:
         new_population = tmp;
     }
 
-    const Rocket rocket_save;
+    Rocket rocket_save;
 
     int landing_zone_id; // ID of the landing_zone among the floor segments
 
@@ -483,17 +509,39 @@ int main()
     int generation{ 0 };
     int idxChromosome{ 0 };
     int idxGene{ 0 };
+    int prevGeneration{ 0 };
 
     std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
 
+    std::chrono::steady_clock::time_point start_loop{ std::chrono::steady_clock::now() };
+    int idxStart{ 0 };
+
     while (!solutionFound) {
+        std::chrono::duration<double> elapsed_seconds{ std::chrono::steady_clock::now() - start_loop };
+        if (elapsed_seconds.count() > 0.15) {
+            Gene* bestGen{ population.getChromosome(0)->getGene(idxStart) };
+
+            std::cerr << "Approx done at generation " << generation << "  -  " << generation - prevGeneration << std::endl;
+            std::cerr << "Idx: " << idxStart << std::endl;
+            std::cerr << "  Angle: " << (int)bestGen->angle << std::endl;
+            std::cerr << "  Power: " << (int)bestGen->power << std::endl;
+
+            population.rocket_save.updateRocket(bestGen->angle, bestGen->power);
+            std::cout << (int)population.rocket_save.angle << " " << (int)population.rocket_save.power << std::endl;
+
+            std::cin >> X >> Y >> hSpeed >> vSpeed >> fuel >> rotate >> power; std::cin.ignore();
+            prevGeneration = generation;
+            idxStart++;
+            start_loop = std::chrono::steady_clock::now();
+        }
+
         generation++;
         population.initRockets();
 
         // For every Rocket and their associated chromosome
         for (int chrom = 0; !solutionFound && chrom < _POPULATION_SIZE; ++chrom) {
             // For every possible moves, i.e., for every genes
-            for (int gen = 0; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen) {
+            for (int gen = idxStart; !solutionFound && gen < _CHROMOSOME_SIZE; ++gen) {
                 Rocket* rocket{ population.getRocket(chrom) };
                 if (rocket->isAlive) {
                     Gene* gene{ population.getChromosome(chrom)->getGene(gen) };
@@ -529,7 +577,7 @@ int main()
             }
         }
         if (!solutionFound)
-            population.mutate();
+            population.mutate(idxStart);
         else
             break;
     }
@@ -548,16 +596,16 @@ int main()
 
         int rotateSol = rotate;
         int powerSol = power;
-        int idx = 0;
+
         // game loop
         while (1) {
-            std::cerr << "Idx: " << idx << std::endl;
-            std::cerr << "  Angle: " << (int)solutionPtr->getGene(idx)->angle << std::endl;
-            std::cerr << "  Power: " << (int)solutionPtr->getGene(idx)->power << std::endl;
+            std::cerr << "Idx: " << idxStart << std::endl;
+            std::cerr << "  Angle: " << (int)solutionPtr->getGene(idxStart)->angle << std::endl;
+            std::cerr << "  Power: " << (int)solutionPtr->getGene(idxStart)->power << std::endl;
 
-            if (idx < idxGene - 1) {
-                rotateSol += solutionPtr->getGene(idx)->angle;
-                powerSol += solutionPtr->getGene(idx)->power;
+            if (idxStart < idxGene - 1) {
+                rotateSol += solutionPtr->getGene(idxStart)->angle;
+                powerSol += solutionPtr->getGene(idxStart)->power;
 
                 rotateSol = std::min(90, std::max(-90, rotateSol));
                 powerSol = std::min(4, std::max(0, powerSol));
@@ -565,12 +613,12 @@ int main()
                 std::cout << rotateSol << " " << powerSol << std::endl;
             }
             else {
-                powerSol += solutionPtr->getGene(idx)->power;
+                powerSol += solutionPtr->getGene(idxStart)->power;
                 powerSol = std::min(4, std::max(0, powerSol));
 
-                std::cout << 0 << " " << powerSol << std::endl;
+                std::cout << 0 << " " << 4 << std::endl;
             }
-            idx++;
+            idxStart++;
 
             int X;
             int Y;

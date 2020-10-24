@@ -3,7 +3,7 @@
 
 #include "Rocket.hpp"
 
-static const int _CHROMOSOME_SIZE{ 100 };
+static const int _CHROMOSOME_SIZE{ 200 };
 static const int _POPULATION_SIZE{ 100 };
 
 static const double _ELITISM_RATIO{ 0.1 };
@@ -41,6 +41,7 @@ public:
     GeneticPopulation(const Rocket& f_rocket, const int* f_floor_buffer, const int f_size_floor);
 
     void initRockets();
+    void initChromosomes();
 
     Chromosome* getChromosome(const std::uint8_t i);
     Rocket* getRocket(const std::uint8_t i);

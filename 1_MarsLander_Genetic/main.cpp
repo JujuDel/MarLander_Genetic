@@ -166,6 +166,7 @@ int main()
     int generation{ 0 };
     int idxChromosome{ 0 };
     int idxGene{ 0 };
+    int prevGeneration{ 0 };
 
     std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
 
@@ -187,7 +188,7 @@ int main()
         {
             Gene* bestGen{ population.getChromosome(0)->getGene(idxStart) };
 
-            std::cerr << "Approx done at generation " << generation << std::endl;
+            std::cerr << "Approx done at generation " << generation << " - " << generation - prevGeneration << std::endl;
             std::cerr << "Idx: " << idxStart << std::endl;
             std::cerr << "  Angle: " << (int)bestGen->angle << std::endl;
             std::cerr << "  Power: " << (int)bestGen->power << std::endl;
@@ -195,6 +196,7 @@ int main()
             population.rocket_save.updateRocket(bestGen->angle, bestGen->power);
             std::cout << (int)population.rocket_save.angle << " " << (int)population.rocket_save.power << std::endl;
 
+            prevGeneration = generation;
             idxStart++;
             start_loop = std::chrono::steady_clock::now();
         }
