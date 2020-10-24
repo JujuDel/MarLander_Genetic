@@ -5,7 +5,7 @@ Resolve the series of CodinGame's problem called Mars Lander using a Genetic Alg
 
 Incremental research | Solution found
 :---: | :---:
-![gif7_1](data/gif/level7_1.gif) | [gif7_2](data/gif/level7_2.gif)
+![gif7_1](data/gif/level7_1.gif) | ![gif7_2](data/gif/level7_2.gif)
 
 Links of the problems:
  - [Mars Lander - Episode 1](https://www.codingame.com/ide/puzzle/mars-lander-episode-1) - Easy
