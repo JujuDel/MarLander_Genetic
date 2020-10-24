@@ -13,6 +13,10 @@ Links of the problems:
 
 Solution developed in ***C++*** and using ***modern OpenGL*** for the visualization part.
 
+Level1 | Level2 | Level3
+:---: | :---: | :---:
+<img height="256" alt="in" src="data/images/achievements_level1.png"> | <img height="256" alt="out" src="data/images/achievements_level2.png"> | <img height="256" alt="out" src="data/images/achievements_level3.png">
+
 ## How-to compile and use
 
 This project uses CMake and this how-to shows how-to use it with Visual Studio.
