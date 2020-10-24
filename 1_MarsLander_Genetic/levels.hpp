@@ -6,7 +6,7 @@
 const float _w{ 6999.f };
 const float _h{ 2999.f };
 
-#define LEVEL4
+#define LEVEL7
 
 /*********************************/
 #ifdef LEVEL1
@@ -20,7 +20,7 @@ static const int level[] = {
     6999, 800
 };
 static const int size_level{ 7 };
-Rocket rocket( 2500, 2700, 0, 0, 0, 0, 550);
+static const Rocket rocket(2500, 2700, 0, 0, 0, 0, 550);
 #endif
 
 /*********************************/
@@ -38,7 +38,7 @@ static const int level[] = {
     6999, 2000
 };
 static const int size_level{ 10 };
-Rocket rocket(6500, 2800, -100, 0, 90, 0, 600);
+static const Rocket rocket(6500, 2800, -100, 0, 90, 0, 600);
 #endif
 
 /*********************************/
@@ -53,7 +53,7 @@ static const int level[] = {
     6999, 800
 };
 static const int size_level{ 7 };
-Rocket rocket(6500, 2800, -90, 0, 90, 0, 750);
+static const Rocket rocket(6500, 2800, -90, 0, 90, 0, 750);
 #endif
 
 /*********************************/
@@ -81,7 +81,7 @@ static const int level[] = {
     6999, 2800
 };
 static const int size_level{ 20 };
-Rocket rocket(500, 2700, 100, 0, -90, 0, 800);
+static const Rocket rocket(500, 2700, 100, 0, -90, 0, 800);
 #endif
 
 /*********************************/
@@ -109,7 +109,7 @@ static const int level[] = {
     6999, 500
 };
 static const int size_level{ 20 };
-Rocket rocket(6500, 2700, -50, 0, 90, 0, 1000);
+static const Rocket rocket(6500, 2700, -50, 0, 90, 0, 1000);
 #endif
 
 /*********************************/
@@ -139,7 +139,7 @@ static const int level[] = {
     6999, 1750,
 };
 static const int size_level{ 22 };
-Rocket rocket(6500, 2600, -20, 0, 45, 0, 1000);
+static const Rocket rocket(6500, 2600, -20, 0, 45, 0, 1000);
 #endif
 
 /*********************************/
@@ -165,7 +165,7 @@ static const int level[] = {
     6999, 600
 };
 static const int size_level{ 18 };
-Rocket rocket(6500, 2000, 0, 0, 0, 0, 1200);
+static const Rocket rocket(6500, 2000, 0, 0, 0, 0, 1200);
 #endif
 
 #endif

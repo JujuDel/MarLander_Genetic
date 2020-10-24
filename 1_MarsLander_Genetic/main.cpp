@@ -3,6 +3,7 @@
 #include <chrono>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 
 // Include GLEW.
 #include <GL/glew.h>
@@ -168,6 +169,8 @@ int main()
     int idxGene{ 0 };
     int prevGeneration{ 0 };
 
+    std::vector<Gene> solutionIncremental;
+
     std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
 
     std::chrono::steady_clock::time_point start_loop{ std::chrono::steady_clock::now() };
@@ -195,6 +198,8 @@ int main()
 
             population.rocket_save.updateRocket(bestGen->angle, bestGen->power);
             std::cout << (int)population.rocket_save.angle << " " << (int)population.rocket_save.power << std::endl;
+
+            solutionIncremental.push_back({ bestGen->angle, bestGen->power });
 
             prevGeneration = generation;
             idxStart++;
@@ -357,7 +362,7 @@ int main()
             return -1;
 #endif
 
-        Rocket rocket{ population.rocket_save };
+        Rocket rocket_res{ rocket };
         GLfloat GL_rocket_buffer_data[] = {
             0.f, 0.f, 0.f,
             0.f, 0.f, 0.f,
@@ -373,7 +378,7 @@ int main()
         const int number_loop_within_1_sec{ 2 };
         double number_loop{ 1 };
         int number_second{ 0 };
-        rocket.debug();
+        rocket_res.debug();
 
         // Check if the ESC key was pressed or the window was closed
         while (!_close && glfwWindowShouldClose(window) == 0)
@@ -400,31 +405,37 @@ int main()
             glDrawArrays(GL_LINES, 0, size_level * 2);
             glDisableVertexAttribArray(0);
 
-            if (!_pause && rocket.isAlive)
+            if (!_pause && rocket_res.isAlive)
             {
                 if (number_loop >= number_loop_within_1_sec)
                 {
                     number_loop = 0;
 
-                    rocket.debug(number_second);
+                    rocket_res.debug(number_second);
 
-                    rocket.updateRocket(chromosome->getGene(number_second)->angle, chromosome->getGene(number_second)->power);
+                    if (number_second < idxStart)
+                    {
+                        rocket_res.updateRocket(solutionIncremental[number_second].angle, solutionIncremental[number_second].power);
+                    }
+                    else
+                    {
+                        rocket_res.updateRocket(chromosome->getGene(number_second)->angle, chromosome->getGene(number_second)->power);
+                    }
+                    std::cout << "  Request: " << (int)rocket_res.angle << " " << (int)rocket_res.power << std::endl << std::endl;
 
-                    std::cout << "  Request: " << (int)rocket.angle << " " << (int)rocket.power << std::endl << std::endl;
-
-                    rocket.debug();
+                    rocket_res.debug();
                     number_second++;
                 }
 
                 number_loop++;
-                updateBuffers(rocket, number_loop / number_loop_within_1_sec, GL_rocket_buffer_data, GL_fire_buffer_data);
-                const Line_d prev_curr{ {rocket.pX, rocket.pY}, {rocket.x, rocket.y} };
+                updateBuffers(rocket_res, number_loop / number_loop_within_1_sec, GL_rocket_buffer_data, GL_fire_buffer_data);
+                const Line_d prev_curr{ {rocket_res.pX, rocket_res.pY}, {rocket_res.x, rocket_res.y} };
                 for (int k = 1; k < size_level; ++k)
                 {
                     const Line_d floor{ {level[2 * (k - 1)], level[2 * (k - 1) + 1]}, {level[2 * k], level[2 * k + 1]} };
-                    if (rocket.x < 0 || rocket.x > _w || rocket.y < 0 || rocket.y > _h || isIntersect(prev_curr, floor))
+                    if (rocket_res.x < 0 || rocket_res.x > _w || rocket_res.y < 0 || rocket_res.y > _h || isIntersect(prev_curr, floor))
                     {
-                        rocket.isAlive = false;
+                        rocket_res.isAlive = false;
                         break;
                     }
                 }
