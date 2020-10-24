@@ -3,15 +3,17 @@
 
 Resolve the series of CodinGame's problem called Mars Lander using a Genetic Algorithm.
 
-![gif](data/gif/level4.gif)
+Incremental research | Solution found
+:---: | :---:
+![gif7_1](data/gif/level7_1.gif) | [gif7_2](data/gif/level7_2.gif)
 
 Links of the problems:
- - [Mars Lander - Episode 1](https://www.codingame.com/ide/puzzle/mars-lander-episode-1)
- - [Mars Lander - Episode 2](https://www.codingame.com/ide/puzzle/mars-lander-episode-2)
- - [Mars Lander - Episode 3](https://www.codingame.com/ide/puzzle/mars-lander-episode-3)
+ - [Mars Lander - Episode 1](https://www.codingame.com/ide/puzzle/mars-lander-episode-1) - Easy
+ - [Mars Lander - Episode 2](https://www.codingame.com/ide/puzzle/mars-lander-episode-2) - Medium
+ - [Mars Lander - Episode 3](https://www.codingame.com/ide/puzzle/mars-lander-episode-3) - Very hard
  - [Mars Lander - Optimization](https://www.codingame.com/ide/puzzle/mars-lander)
 
-Solution developed in ***C++*** and using ***modern OpenGL*** for the visualization part.
+Solution developed in ***C++*** and using ***modern OpenGL*** for the visualization.
 
 Level1 | Level2 | Level3
 :---: | :---: | :---:
@@ -31,7 +33,7 @@ Then, under Visual Studio:
 
 1) Build -> Build Solution (once done you can play around with OpenGL with the project cube3D, my *Hello World* to check that everything is fine)
 2) On the *"Solution Explorer"* tab, right click on the *"MarsLander_Genetic"* project then *"Set as Startup Project"*
-3) Line 60 to 62, you can modify the initialization of the variables *"size_level"*, *"level"* and *"population"* to play around with different levels, available in *"levels.hpp"*
+3) In the file `levels.hpp`, you can modify the name of the macro `LEVEL7` (line 9) to whatever level you want (from 1 to 7 included).
 
 CMake-gui | Visual Studio
 :---: | :---:
@@ -81,19 +83,53 @@ We are now ready to go with the Genetic Algorithm!
 The architecture is as follow:
 
 ```cpp
-struct Gene {
-    std::int8_t angle;
-    std::int8_t power;
+/* Rocket class
+*
+* A rocket object used to simulate the movements in the atmosphere of Mars.
+*/
+class Rocket {
+public:
+    // Rocket c'tr
+    Rocket(const double f_x, const double f_y, const double f_vx, const double f_vy, const std::int8_t f_angle, const std::int8_t f_power, const int f_fuel);
+    
+    // Simulate the move of the rocket for 1sec with the given command
+    void updateRocket(const std::int8_t f_angle, const std::int8_t f_thrust);
+
+private:
+    double pX;           //!< x-coordinate of the rocket 1sec ago
+    double pY;           //!< y-coordinate of the rocket 1sec ago
+    double x;            //!< current x-coordinate of the rocket
+    double y;            //!< current y-coordinate of the rocket
+    double vx;           //!< current horizontal velocity of the rocket
+    double vy;           //!< current vertical velocity of the rocket
+    double ax;           //!< current horizontal acceleration of the rocket
+    double ay;           //!< current vertical acceleration of the rocket
+    std::int8_t angle;   //!< current angle of the rocket
+    std::int8_t thrust;  //!< current thrust of the rocket
+    int fuel;            //!< amount of fuel (in L) still available of the rocket  
 };
 
+/* Gene struct
+*
+* Contains an angle/thrust request.
+*/
+struct Gene {
+    std::int8_t angle;
+    std::int8_t thrust;
+};
+
+/* Chromosome struct
+*
+* Contains a set of angle/thrust requests and the fitness score obtained by following them.
+*/
 struct Chromosome {
     Gene chromosome[_CHROMOSOME_SIZE];
     double fitness;
 };
 
-/* Population class:
+/* Population class
 *
-* Contain two arrays of population to optimize the run-time performances.
+* Contains two arrays of population to optimize the run-time performances.
 * The two pointers 'population' and 'new_population' will alternatively point to 'populationA' and 'populationB'.
 * In that way, we reduce the amount of memory allocation/de-allocation and just stick with memory access.
 */
@@ -101,15 +137,17 @@ class Population {
 public:
     GeneticPopulation();
 
-    // Fill the next population by performing elitism, selection, crossover and mutation.
+    // Fill the next population by computing the fitness and performing elitism, selection, crossover and mutation.
     void mutate();
 
 private:
     Chromosome populationA[_POPULATION_SIZE];	//!< One population of chromosomes
     Chromosome populationB[_POPULATION_SIZE];	//!< Another one
 
-    Chromosome* population; 	//!< Ptr to the current population
+    Chromosome* population; 	   //!< Ptr to the current population
     Chromosome* new_population;	//!< Ptr to the next population
+    
+    Rocket rockets_gen[_POPULATION_SIZE]; //!< The simulated rockets
 }
 ```
 
