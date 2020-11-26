@@ -4,16 +4,27 @@
 
 #include "Genetic.hpp"
 
-/*******************************/
-/*            Gene             */
-/*******************************/
-Gene::Gene(const std::int8_t f_angle, const std::int8_t f_power)
-    : angle{f_angle}, power{f_power} {}
+// #######################################################
+//
+//                        GENE
+//
+// #######################################################
 
-/*******************************/
-/*         Chromosome          */
-/*******************************/
+Gene::Gene(const std::int8_t f_angle, const std::int8_t f_thrust)
+    : angle{f_angle}, thrust{f_thrust} {}
 
+// #######################################################
+//
+//                      CHROMOSOME
+//
+// #######################################################
+
+//! @brief  Get a random angle in the range f_angle +/- 15.
+//!         The value is clamped between -90 and 90.
+//!
+//! @param[in] f_angle  The current angle value.
+//!
+//! @return The next random angle value.
 std::int8_t getRandAngle(const int f_angle) {
   const int maxRand{std::min(90 - f_angle, 15) + std::min(f_angle + 90, 15) +
                     1};
@@ -22,22 +33,31 @@ std::int8_t getRandAngle(const int f_angle) {
                                   std::min(f_angle + 90, 15));
 }
 
-std::int8_t getRandPower(const int f_power) {
-  const int maxRandPower{std::min(4 - f_power, 1) + std::min(f_power, 1) + 1};
+//! @brief  Get a random thrust power in the range f_thrust +/- 1.
+//!         The value is clamped between 0 and 4.
+//!
+//! @param[in] f_thrust  The current thrust power value.
+//!
+//! @return The next random thrust power value.
+std::int8_t getRandThrust(const int f_thrust) {
+  const int maxRandPower{std::min(4 - f_thrust, 1) + std::min(f_thrust, 1) + 1};
 
-  return static_cast<std::int8_t>(rand() % maxRandPower - std::min(f_power, 1));
+  return static_cast<std::int8_t>(rand() % maxRandPower -
+                                  std::min(f_thrust, 1));
 }
 
-Chromosome::Chromosome(const int f_angle, const int f_power) : fitness{0} {
+/************************************************************/
+Chromosome::Chromosome(const int f_angle, const int f_thrust) : fitness{0} {
   int angle = f_angle;
-  int power = f_power;
+  int thrust = f_thrust;
   for (int i = 0; i < _CHROMOSOME_SIZE; ++i) {
-    chromosome[i] = {getRandAngle(f_angle), getRandPower(f_power)};
+    chromosome[i] = {getRandAngle(angle), getRandThrust(thrust)};
     angle += chromosome[i].angle;
-    power += chromosome[i].power;
+    thrust += chromosome[i].thrust;
   }
 }
 
+/************************************************************/
 Gene *Chromosome::getGene(const std::uint8_t i) {
   if (i < _CHROMOSOME_SIZE) {
     return &chromosome[i];
@@ -45,13 +65,18 @@ Gene *Chromosome::getGene(const std::uint8_t i) {
   return nullptr;
 }
 
-bool chromosome_sorter(Chromosome const &lhs, Chromosome const &rhs) {
+/************************************************************/
+bool Chromosome::chromosome_sorter(Chromosome const &lhs,
+                                   Chromosome const &rhs) {
   return lhs.fitness > rhs.fitness;
 }
 
-/*******************************/
-/*         Population          */
-/*******************************/
+// #######################################################
+//
+//                      POPULATION
+//
+// #######################################################
+
 GeneticPopulation::GeneticPopulation(const Rocket &f_rocket,
                                      const int *f_floor_buffer,
                                      const int f_size_floor)
@@ -70,18 +95,21 @@ GeneticPopulation::GeneticPopulation(const Rocket &f_rocket,
   initChromosomes();
 }
 
+/************************************************************/
 void GeneticPopulation::initRockets() {
   for (int i = 0; i < _POPULATION_SIZE; ++i) {
     rockets_gen[i].init(rocket_save);
   }
 }
 
+/************************************************************/
 void GeneticPopulation::initChromosomes() {
   for (int i = 0; i < _POPULATION_SIZE; ++i) {
-    population[i] = Chromosome(rocket_save.angle, rocket_save.power);
+    population[i] = Chromosome(rocket_save.angle, rocket_save.thrust);
   }
 }
 
+/************************************************************/
 Chromosome *GeneticPopulation::getChromosome(const std::uint8_t i) {
   if (i < _POPULATION_SIZE) {
     return &population[i];
@@ -89,6 +117,7 @@ Chromosome *GeneticPopulation::getChromosome(const std::uint8_t i) {
   return nullptr;
 }
 
+/************************************************************/
 Rocket *GeneticPopulation::getRocket(const std::uint8_t i) {
   if (i < _POPULATION_SIZE) {
     return &rockets_gen[i];
@@ -96,15 +125,21 @@ Rocket *GeneticPopulation::getRocket(const std::uint8_t i) {
   return nullptr;
 }
 
-/* f(d) = 1000. / (1 + 0.009999 * d)
- *
- * f(0)      = 1000.000
- * f(10)     =  909.099
- * f(100)    =  500.025
- * f(1000)   =   90.917
- * f(10000)  =    9.902
- * f(100000) =    0.999
- */
+//! @brief  Given a rocket, compute its distance fitness score.
+//!
+//! The socre is calculated following the formulae:
+//!   f(d) = 1000. / (1 + 0.009999 * d)
+//!
+//!   f(0)      = 1000.000
+//!   f(10)     =  909.099
+//!   f(100)    =  500.025
+//!   f(1000)   =   90.917
+//!   f(10000)  =    9.902
+//!   f(100000) =    0.999
+//!
+//! @param[in] f_thrust  The current thrust power value.
+//!
+//! @return The next random thrust power value.
 double distance(const Rocket &rocket, const int *floor_buffer,
                 const int landing_zone_id) {
   if (rocket.floor_id_crash == -1)
@@ -145,22 +180,34 @@ double distance(const Rocket &rocket, const int *floor_buffer,
   return 1000. / (1. + 0.009999 * dist);
 }
 
-/* Horizontal speed: s >= 0 in m/s-1
- *   f(s) = 0.00036057692307692 * s^2 + 0.069711538461538 * s - 3.3653846153846
- *
- * f(0)   = 3.3653846153846
- * f(40)  = 0
- * f(200) = -25
- * f(300) = -50
- *
- *  Vertical speed: s >= 0 in m/s-1
- *   f(s) = 0.0003968253968254 * s^2 + 0.051587301587302 * s - 1.1904761904762
- *
- * fy(0)   = 1.1904761904762
- * fy(25)  = 0
- * f(200) = -25
- * f(300) = -50
- */
+//! @brief  Given horizontal and vertical speeds, compute the fitness penalty.
+//!
+//! The fitness penalty is calculated following the formulaes:
+//!   Horizontal speed: s >= 0 in m/s-1
+//!     h(s) = 0.00036057692307692 * s^2 + 0.069711538461538 * s
+//!            - 3.3653846153846
+//!
+//!     h(0)   = 3.3653846153846
+//!     h(40)  = 0
+//!     h(200) = -25
+//!     h(300) = -50
+//!
+//!   Vertical speed: s >= 0 in m/s-1
+//!     v(s) = 0.0003968253968254 * s ^ 2 + 0.051587301587302 * s
+//!            - 1.1904761904762
+//!
+//!     v(0)   = 1.1904761904762
+//!     v(25)  = 0
+//!     v(200) = -25
+//!     v(300) = -50
+//!
+//!   Speed fitness penalty: sx, sy >= 0 in m/s-1
+//!     f(sx, sy) = -5 * (h(sx) + v(sy))
+//!
+//! @param[in] vx  The horizontal speed.
+//! @param[in] vy  The vertical speed.
+//!
+//! @return The speed fitness penalty.
 double speed(const double vx, const double vy) {
   double scoreX =
       0.00036057692307692 * vx * vx + 0.069711538461538 * vx - 3.3653846153846;
@@ -170,6 +217,7 @@ double speed(const double vx, const double vy) {
   return -5. * (scoreX + scoreY);
 }
 
+/************************************************************/
 void GeneticPopulation::mutate(const int idxStart) {
   double sum_fitness{0.};
   // Compute every fitness
@@ -192,7 +240,7 @@ void GeneticPopulation::mutate(const int idxStart) {
   // Sort the fitness
   std::sort(population,
             population + sizeof(populationA) / sizeof(populationA[0]),
-            &chromosome_sorter);
+            &Chromosome::chromosome_sorter);
 
   double cum_sum{0.};
   for (int i = _POPULATION_SIZE - 1; i >= 0; --i) {
@@ -236,27 +284,28 @@ void GeneticPopulation::mutate(const int idxStart) {
       if (r > _MUTATION_RATE) {
         const double angleP0 = population[idxParent1].chromosome[g].angle;
         const double angleP1 = population[idxParent2].chromosome[g].angle;
-        const double powerP0 = population[idxParent1].chromosome[g].power;
-        const double powerP1 = population[idxParent2].chromosome[g].power;
+        const double powerP0 = population[idxParent1].chromosome[g].thrust;
+        const double powerP1 = population[idxParent2].chromosome[g].thrust;
 
         new_population[i].chromosome[g].angle =
             static_cast<std::int8_t>(r * angleP0 + (1 - r) * angleP1);
-        new_population[i].chromosome[g].power =
+        new_population[i].chromosome[g].thrust =
             static_cast<std::int8_t>(r * powerP0 + (1 - r) * powerP1);
         if (i != _POPULATION_SIZE - 1) {
           new_population[i + 1].chromosome[g].angle =
               static_cast<std::int8_t>((1 - r) * angleP0 + r * angleP1);
-          new_population[i + 1].chromosome[g].power =
+          new_population[i + 1].chromosome[g].thrust =
               static_cast<std::int8_t>((1 - r) * powerP0 + r * powerP1);
         }
       } else {
         new_population[i].chromosome[g].angle = getRandAngle(rocket_save.angle);
-        new_population[i].chromosome[g].power = getRandPower(rocket_save.power);
+        new_population[i].chromosome[g].thrust =
+            getRandThrust(rocket_save.thrust);
         if (i != _POPULATION_SIZE - 1) {
           new_population[i + 1].chromosome[g].angle =
               getRandAngle(rocket_save.angle);
-          new_population[i + 1].chromosome[g].power =
-              getRandPower(rocket_save.power);
+          new_population[i + 1].chromosome[g].thrust =
+              getRandThrust(rocket_save.thrust);
         }
       }
     }

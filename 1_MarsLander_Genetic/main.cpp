@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 
-// Include GLEW.
+// Include GLEW
 #include <GL/glew.h>
 
 // Include GLFW
@@ -16,27 +16,49 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-using namespace glm;
 
+// Include MarsLander headers
 #include "Genetic.hpp"
 #include "Rocket.hpp"
 #include "Utils.hpp"
 #include "common/shader.hpp"
 #include "levels.hpp"
 
-#define VISUALIZE_GENETIC
-#define VISUALIZE_RESULT
+using namespace glm;
+using namespace std;
 
-#ifdef VISUALIZE_GENETIC
+// #######################################################
+//
+//                        GLOBALS
+//
+// #######################################################
+
+//!< Size if of the buffer containing the genes of a chromosome.
 static const size_t _SIZE_BUFFER_CHROMOSOME{3 * 2 * _CHROMOSOME_SIZE};
-#endif
 
-#if defined(VISUALIZE_GENETIC) || defined(VISUALIZE_RESULT)
-GLFWwindow *window;
+GLFWwindow *window; //!< The main window.
 
-bool _pause{false};
-bool _close{false};
+bool _pause{false}; //!< Play/pause status of the program.
+bool _close{false}; //!< Close or not the main window.
 
+extern const float _w{6999.f}; //!< Map width.
+extern const float _h{2999.f}; //!< Map height.
+
+// #######################################################
+//
+//                        OPENGL
+//
+// #######################################################
+
+//! @brief  Callback functions on keypress events. Handles:
+//!     - Spacebar: pause
+//!     - Escape: close
+//!
+//! @param[in] window   The window in which the event happened.
+//! @param[in] key      Keyboard key which has been pressed.
+//! @param[in] scancode Platform-specific scancode.
+//! @param[in] action   The key action.
+//! @param[in] mods     The modifier key flags.
 void keyCallback(GLFWwindow *window, int key, int scancode, int action,
                  int mods) {
   if (key == GLFW_KEY_ESCAPE) {
@@ -44,14 +66,29 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action,
   }
   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
     if (_pause) {
-      std::cout << "PLAY" << std::endl << std::endl;
+      cout << "PLAY" << endl << endl;
     } else {
-      std::cout << "PAUSE" << std::endl;
+      cout << "PAUSE" << endl;
     }
     _pause = !_pause;
   }
 }
 
+//! @brief  Initialize the environment:
+//!     - Initialise GLFW
+//!     - Open a window and create its OpenGL context
+//!     - Initialize GLEW
+//!     - Handles keypress event
+//!     - Create and compile the GLSL program from the shaders
+//!     - Prepare the data buffers
+//!
+//! @param[out] VertexArrayID    ID of the vertex array.
+//! @param[out] programIDFloor   Red floor program
+//! @param[out] programIDLine    Blue lines program.
+//! @param[out] programIDRocket  Green rocket program.
+//! @param[out] floorbuffer      Buffer containing the floor data.
+//!
+//! @return 0 on success, -1 on failure.
 int initOpenGL(GLuint &VertexArrayID, GLuint &programIDFloor,
                GLuint &programIDLine, GLuint &programIDRocket,
                GLuint &floorbuffer) {
@@ -140,15 +177,21 @@ int initOpenGL(GLuint &VertexArrayID, GLuint &programIDFloor,
   return 0;
 }
 
-#endif
+// #######################################################
+//
+//                        MAIN
+//
+// #######################################################
 
 int main() {
+  // -----------------------------------------------------
+  //               SOME INITIALIZATION
+  // -----------------------------------------------------
   srand(time(NULL));
 
   // Rocket, level and size_level are defined in `level.hpp`
   GeneticPopulation population(rocket, level, size_level);
 
-#ifdef VISUALIZE_GENETIC
   GLuint VertexArrayID, programIDFloor, programIDLine, programIDRocket,
       floorbuffer;
   if (initOpenGL(VertexArrayID, programIDFloor, programIDLine, programIDRocket,
@@ -162,7 +205,6 @@ int main() {
     rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 1] =
         2.f * static_cast<GLfloat>(population.rocket_save.y) / _h - 1;
   }
-#endif
 
   bool solutionFound{false};
   int generation{0};
@@ -170,47 +212,51 @@ int main() {
   int idxGene{0};
   int prevGeneration{0};
 
-  std::vector<Gene> solutionIncremental;
+  vector<Gene> solutionIncremental;
 
-  std::chrono::steady_clock::time_point start{std::chrono::steady_clock::now()};
+  chrono::high_resolution_clock::time_point start{
+      std::chrono::high_resolution_clock::now()};
 
-  std::chrono::steady_clock::time_point start_loop{
-      std::chrono::steady_clock::now()};
+  chrono::high_resolution_clock::time_point start_loop{
+      chrono::high_resolution_clock::now()};
   int idxStart{0};
 
-#ifdef VISUALIZE_GENETIC
-  while (!solutionFound && !_close && glfwWindowShouldClose(window) == 0)
-#else
-  while (!solutionFound)
-#endif
-  {
-#ifdef VISUALIZE_GENETIC
-    std::cout << "Generation " << generation << std::endl;
-#endif
+  // -----------------------------------------------------
+  //                  MAIN GENETIC LOOP
+  // -----------------------------------------------------
+  while (!solutionFound && !_close && glfwWindowShouldClose(window) == 0) {
+    cout << "Generation " << generation << endl;
 
-    std::chrono::duration<double> elapsed_seconds{
-        std::chrono::steady_clock::now() - start_loop};
+    // ...................................................
+    //                 INCREMENTAL SEARCH
+    // ...................................................
+    chrono::duration<double> elapsed_seconds{
+        chrono::high_resolution_clock::now() - start_loop};
     if (elapsed_seconds.count() > 0.15) {
       Gene *bestGen{population.getChromosome(0)->getGene(idxStart)};
 
-      std::cerr << "Approx done at generation " << generation << " - "
-                << generation - prevGeneration << std::endl;
-      std::cerr << "Idx: " << idxStart << std::endl;
-      std::cerr << "  Angle: " << (int)bestGen->angle << std::endl;
-      std::cerr << "  Power: " << (int)bestGen->power << std::endl;
+      cerr << "Approx done at generation " << generation << " - "
+           << generation - prevGeneration << endl;
+      cerr << "Idx: " << idxStart << endl;
+      cerr << "  Angle: " << (int)bestGen->angle << endl;
+      cerr << "  Power: " << (int)bestGen->thrust << endl;
 
-      population.rocket_save.updateRocket(bestGen->angle, bestGen->power);
-      std::cout << (int)population.rocket_save.angle << " "
-                << (int)population.rocket_save.power << std::endl;
+      population.rocket_save.updateRocket(bestGen->angle, bestGen->thrust);
+      cout << (int)population.rocket_save.angle << " "
+           << (int)population.rocket_save.thrust << endl;
 
-      solutionIncremental.push_back({bestGen->angle, bestGen->power});
+      solutionIncremental.push_back({bestGen->angle, bestGen->thrust});
 
       prevGeneration = generation;
       idxStart++;
-      start_loop = std::chrono::steady_clock::now();
+      start_loop = chrono::high_resolution_clock::now();
     }
 
     generation++;
+
+    // ...................................................
+    //         ONE POPULATION: from birth to death
+    // ...................................................
     population.initRockets();
 
     // For every Rocket and their associated chromosome
@@ -222,7 +268,7 @@ int main() {
         if (rocket->isAlive) {
           Gene *gene{population.getChromosome(chrom)->getGene(gen)};
 
-          rocket->updateRocket(gene->angle, gene->power);
+          rocket->updateRocket(gene->angle, gene->thrust);
 
           const Line_d prev_curr{{rocket->pX, rocket->pY},
                                  {rocket->x, rocket->y}};
@@ -239,7 +285,7 @@ int main() {
 
               // Landing successful!
               if (k == population.landing_zone_id && rocket->isParamSuccess()) {
-                std::cout << "Landing SUCCESS!" << std::endl << std::endl;
+                cout << "Landing SUCCESS!" << endl << endl;
                 solutionFound = true;
                 idxChromosome = chrom;
                 idxGene = gen;
@@ -247,49 +293,62 @@ int main() {
               break;
             }
           }
-#ifdef VISUALIZE_GENETIC
           const int idx{3 * (2 * gen + 1)};
+
           rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0] =
               static_cast<GLfloat>(2.f * rocket->x / _w - 1);
+
           rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1] =
               static_cast<GLfloat>(2.f * rocket->y / _h - 1);
+
           rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 2] = 0.f;
+
           if (gen != _CHROMOSOME_SIZE - 1) {
             rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 3] =
                 rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0];
+
             rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 4] =
                 rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1];
+
             rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 5] = 0.f;
           }
         } else {
           if (gen < 2)
             continue;
           const int idx{3 * (2 * gen + 1)};
+
           rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0] =
               static_cast<GLfloat>(2.f * rocket->x / _w - 1);
+
           rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1] =
               static_cast<GLfloat>(2.f * rocket->y / _h - 1);
+
           rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 2] = 0.f;
+
           if (gen != _CHROMOSOME_SIZE - 1) {
             rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 3] =
                 rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0];
+
             rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 4] =
                 rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 1];
+
             rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + idx + 5] = 0.f;
           }
-#else
-        } else {
-          break;
-#endif
         }
       }
     }
+
+    // ...................................................
+    //                     MUTATION
+    // ...................................................
     if (!solutionFound)
       population.mutate(idxStart);
     else
       break;
 
-#ifdef VISUALIZE_GENETIC
+    // ...................................................
+    //                  OPENGL DISPLAY
+    // ...................................................
     // Clear the screen.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -343,30 +402,21 @@ int main() {
     // Swap buffers
     glfwSwapBuffers(window);
     glfwPollEvents();
-#endif
   }
 
-  std::chrono::duration<double> elapsed_seconds{
-      std::chrono::steady_clock::now() - start};
-  std::cout << "Execution time: " << elapsed_seconds.count() << "s"
-            << std::endl;
+  chrono::duration<double> elapsed_seconds{
+      chrono::high_resolution_clock::now() - start};
+  cout << "Execution time: " << elapsed_seconds.count() << "s" << endl;
 
+  // -----------------------------------------------------
+  //                 DISPLAY THE SOLUTION
+  // -----------------------------------------------------
   if (solutionFound) {
-    std::cout << std::endl;
-    std::cout << "Solution found at:" << std::endl;
-    std::cout << "  Generation: " << generation << std::endl;
-    std::cout << "  Child: " << idxChromosome << std::endl;
-    std::cout << "  Gene: " << idxGene << std::endl << std::endl;
-
-#ifdef VISUALIZE_RESULT
-
-#ifndef VISUALIZE_GENETIC
-    GLuint VertexArrayID, programIDFloor, programIDLine, programIDRocket,
-        floorbuffer;
-    if (initOpenGL(VertexArrayID, programIDFloor, programIDLine,
-                   programIDRocket, floorbuffer) == -1)
-      return -1;
-#endif
+    cout << endl;
+    cout << "Solution found at:" << endl;
+    cout << "  Generation: " << generation << endl;
+    cout << "  Child: " << idxChromosome << endl;
+    cout << "  Gene: " << idxGene << endl << endl;
 
     Rocket rocket_res{rocket};
     GLfloat GL_rocket_buffer_data[] = {0.f, 0.f, 0.f, 0.f, 0.f,
@@ -412,14 +462,14 @@ int main() {
 
           if (number_second < idxStart) {
             rocket_res.updateRocket(solutionIncremental[number_second].angle,
-                                    solutionIncremental[number_second].power);
+                                    solutionIncremental[number_second].thrust);
           } else {
             rocket_res.updateRocket(chromosome->getGene(number_second)->angle,
-                                    chromosome->getGene(number_second)->power);
+                                    chromosome->getGene(number_second)->thrust);
           }
-          std::cout << "  Request: " << (int)rocket_res.angle << " "
-                    << (int)rocket_res.power << std::endl
-                    << std::endl;
+          cout << "  Request: " << (int)rocket_res.angle << " "
+               << (int)rocket_res.thrust << endl
+               << endl;
 
           rocket_res.debug();
           number_second++;
@@ -503,17 +553,16 @@ int main() {
 
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
-#endif
-  } else {
-#ifdef VISUALIZE_GENETIC
+  }
+  // No solution
+  else {
     // Cleanup VBO
     glDeleteBuffers(1, &floorbuffer);
     glDeleteVertexArrays(1, &VertexArrayID);
     glDeleteProgram(programIDFloor);
     glDeleteProgram(programIDRocket);
     glDeleteProgram(programIDLine);
-#endif
-    std::cout << "No solution found..." << std::endl;
+    cout << "No solution found..." << endl;
   }
 
   return 0;
