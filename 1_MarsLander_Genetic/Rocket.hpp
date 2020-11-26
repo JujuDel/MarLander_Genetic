@@ -3,7 +3,6 @@
 
 #include <GL/glew.h>
 
-
 //! @brief  Rocket's struct
 struct Rocket {
   double pX, pY;      //!< Previous coordinates.
@@ -50,15 +49,5 @@ struct Rocket {
   //! @return True if landing could be successful, else False.
   bool isParamSuccess() const;
 };
-
-//! @brief  Update the OpenGL buffers for on rocket
-//!
-//! @param[in] f_rocket               The rocket.
-//! @param[in] f_elapsed              Elapsed time since the previous update.
-//! @param[in] GL_rocket_buffer_data  Buffer of the rocket's triangle data.
-//! @param[in] GL_fire_buffer_data    Buffer of the rocket's thrust power data.
-void updateBuffers(const Rocket &f_rocket, const double f_elapsed,
-                   GLfloat *GL_rocket_buffer_data,
-                   GLfloat *GL_fire_buffer_data);
 
 #endif
