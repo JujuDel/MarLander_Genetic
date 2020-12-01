@@ -26,14 +26,22 @@ extern bool _close; //!< Close or not the main window.
 
 int main() {
   // -----------------------------------------------------
-  //               SOME INITIALIZATION
+  //                   INITIALIZATION
   // -----------------------------------------------------
   std::srand(time(NULL));
+
+  const Levels levels;
+  const int idxLevel = 7;
+
+  const Rocket rocket = levels.getRocket(idxLevel);
+  const std::vector<int> floor = levels.getFloor(idxLevel);
+  const int* level = floor.data();
+  const int size_level = levels.getSizeFloor(idxLevel);
 
   // Rocket, level and size_level are defined in `level.hpp`
   GeneticPopulation population(rocket, level, size_level);
 
-  Visualization_OpenGL visualization(rocket);
+  Visualization_OpenGL visualization(rocket, level, size_level);
 
   if (visualization.initOpenGL() == -1)
     return -1;

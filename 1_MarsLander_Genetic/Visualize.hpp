@@ -25,7 +25,8 @@ public:
   //! @brief  C'tor.
   //!
   //! @param[in] f_rocket  The rocket to initialize with.
-  Visualization_OpenGL(const Rocket &f_rocket);
+  Visualization_OpenGL(const Rocket &f_rocket, const int *const level,
+                       const int size_level);
 
   //! @brief  Initialize the environment:
   //!     - Initialise GLFW
@@ -86,6 +87,9 @@ private:
 
   GLfloat GL_rocket_buffer_data[9]; //!< Single rocket triangle buffer.
   GLfloat GL_fire_buffer_data[6];   //!< Single rocket thrust power buffer.
+
+  const int *const m_level; //!< Poiter to the current floor data buffer.
+  const int m_size_level;   //!< Size of the current floor data buffer.
 };
 
 //! @brief  Callback functions on keypress events. Handles:

@@ -19,10 +19,15 @@ constexpr int _base{100};   //!< Size of the base of the rocket.
 constexpr int _height{150}; //!< Size of the height of the rocket.
 constexpr int _fire{25};    //!< Size of the maximum thrust power vizu.
 
+constexpr size_t _MAX_SIZE_FLOOR{35}; //! Maximum size of the floor buffer
+
 /************************************************************/
-Visualization_OpenGL::Visualization_OpenGL(const Rocket &f_rocket)
+Visualization_OpenGL::Visualization_OpenGL(const Rocket &f_rocket,
+                                           const int *const level,
+                                           const int size_level)
     : VertexArrayID{0}, programIDFloor{0}, programIDLine{0}, programIDRocket{0},
-      floorbuffer{0}, m_window{nullptr} {
+      floorbuffer{0}, m_window{nullptr}, m_level{level}, m_size_level{
+                                                             size_level} {
   for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom) {
     rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 0] =
         2.f * static_cast<GLfloat>(f_rocket.x) / _w - 1;
@@ -93,24 +98,24 @@ int Visualization_OpenGL::initOpenGL() {
       "../1_MarsLander_Genetic/shaders/RocketFragmentShader.fragmentshader");
 
   // Convert from [0, _w] x [0, _h] to [-1, 1] x [-1, 1]
-  GLfloat floor_buffer_data[3 * (2 * (size_level - 1))];
-  for (int i = 0; i < size_level; ++i) {
+  GLfloat floor_buffer_data[3 * (2 * (_MAX_SIZE_FLOOR - 1))];
+  for (int i = 0; i < m_size_level; ++i) {
     if (i == 0) {
-      floor_buffer_data[0] = 2 * level[0] / _w - 1;
-      floor_buffer_data[1] = 2 * level[1] / _h - 1;
+      floor_buffer_data[0] = 2 * m_level[0] / _w - 1;
+      floor_buffer_data[1] = 2 * m_level[1] / _h - 1;
       floor_buffer_data[2] = 0.f;
-    } else if (i == size_level - 1) {
-      const int idx{3 * (2 * size_level - 3)};
-      floor_buffer_data[idx + 0] = 2 * level[2 * i + 0] / _w - 1;
-      floor_buffer_data[idx + 1] = 2 * level[2 * i + 1] / _h - 1;
+    } else if (i == m_size_level - 1) {
+      const int idx{3 * (2 * m_size_level - 3)};
+      floor_buffer_data[idx + 0] = 2 * m_level[2 * i + 0] / _w - 1;
+      floor_buffer_data[idx + 1] = 2 * m_level[2 * i + 1] / _h - 1;
       floor_buffer_data[idx + 2] = 0.f;
     } else {
       const int idx{3 * (2 * i - 1)};
-      floor_buffer_data[idx + 0] = 2 * level[2 * i + 0] / _w - 1;
-      floor_buffer_data[idx + 1] = 2 * level[2 * i + 1] / _h - 1;
+      floor_buffer_data[idx + 0] = 2 * m_level[2 * i + 0] / _w - 1;
+      floor_buffer_data[idx + 1] = 2 * m_level[2 * i + 1] / _h - 1;
       floor_buffer_data[idx + 2] = 0.f;
-      floor_buffer_data[idx + 3] = 2 * level[2 * i + 0] / _w - 1;
-      floor_buffer_data[idx + 4] = 2 * level[2 * i + 1] / _h - 1;
+      floor_buffer_data[idx + 3] = 2 * m_level[2 * i + 0] / _w - 1;
+      floor_buffer_data[idx + 4] = 2 * m_level[2 * i + 1] / _h - 1;
       floor_buffer_data[idx + 5] = 0.f;
     }
   }
@@ -225,7 +230,7 @@ void Visualization_OpenGL::drawPopulation() {
   );
 
   // Draw the line
-  glDrawArrays(GL_LINES, 0, size_level * 2);
+  glDrawArrays(GL_LINES, 0, m_size_level * 2);
   glDisableVertexAttribArray(0);
 
   for (int pop = 0; pop < _POPULATION_SIZE; pop++) {
@@ -282,7 +287,7 @@ void Visualization_OpenGL::drawSingleRocket() {
   );
 
   // Draw the line
-  glDrawArrays(GL_LINES, 0, size_level * 2);
+  glDrawArrays(GL_LINES, 0, m_size_level * 2);
   glDisableVertexAttribArray(0);
   glUseProgram(programIDRocket);
 
