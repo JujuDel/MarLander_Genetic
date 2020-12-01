@@ -21,28 +21,19 @@ constexpr int _fire{25};    //!< Size of the maximum thrust power vizu.
 
 constexpr size_t _MAX_SIZE_FLOOR{35}; //! Maximum size of the floor buffer
 
+Visualization_OpenGL *Visualization_OpenGL::INSTANCE =
+    new Visualization_OpenGL(); //!< Singleton
+
 /************************************************************/
-Visualization_OpenGL::Visualization_OpenGL(const Rocket &f_rocket,
-                                           const int *const level,
-                                           const int size_level)
+Visualization_OpenGL::Visualization_OpenGL()
     : VertexArrayID{0}, programIDFloor{0}, programIDLine{0}, programIDRocket{0},
-      floorbuffer{0}, m_window{nullptr}, m_level{level}, m_size_level{
-                                                             size_level} {
-  for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom) {
-    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 0] =
-        2.f * static_cast<GLfloat>(f_rocket.x) / _w - 1;
-    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 1] =
-        2.f * static_cast<GLfloat>(f_rocket.y) / _h - 1;
-  }
-
-  for (int i = 0; i < 9; ++i)
-    GL_rocket_buffer_data[i] = 0.;
-  for (int i = 0; i < 6; ++i)
-    GL_fire_buffer_data[i] = 0.;
-}
+      floorbuffer{0}, m_window{nullptr}, m_initDone{false} {}
 
 /************************************************************/
-int Visualization_OpenGL::initOpenGL() {
+int Visualization_OpenGL::initOpenGL(const bool doIt) {
+  if (m_initDone || !doIt)
+    return 0;
+
   // Initialise GLFW
   if (!glfwInit()) {
     fprintf(stderr, "Failed to initialize GLFW\n");
@@ -97,6 +88,32 @@ int Visualization_OpenGL::initOpenGL() {
       "../1_MarsLander_Genetic/shaders/RocketVertexShader.vertexshader",
       "../1_MarsLander_Genetic/shaders/RocketFragmentShader.fragmentshader");
 
+  m_initDone = true;
+  return 0;
+}
+
+/************************************************************/
+void Visualization_OpenGL::set(const Rocket &f_rocket, const int *const level,
+                               const int size_level, const bool doIt) {
+  m_level = level;
+  m_size_level = size_level;
+  m_doIt = doIt;
+
+  if (!m_doIt)
+      return;
+
+  for (int chrom = 0; chrom < _POPULATION_SIZE; ++chrom) {
+    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 0] =
+        2.f * static_cast<GLfloat>(f_rocket.x) / _w - 1;
+    rockets_line[chrom * _SIZE_BUFFER_CHROMOSOME + 1] =
+        2.f * static_cast<GLfloat>(f_rocket.y) / _h - 1;
+  }
+
+  for (int i = 0; i < 9; ++i)
+    GL_rocket_buffer_data[i] = 0.;
+  for (int i = 0; i < 6; ++i)
+    GL_fire_buffer_data[i] = 0.;
+
   // Convert from [0, _w] x [0, _h] to [-1, 1] x [-1, 1]
   GLfloat floor_buffer_data[3 * (2 * (_MAX_SIZE_FLOOR - 1))];
   for (int i = 0; i < m_size_level; ++i) {
@@ -124,8 +141,6 @@ int Visualization_OpenGL::initOpenGL() {
   glBindBuffer(GL_ARRAY_BUFFER, floorbuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(floor_buffer_data), floor_buffer_data,
                GL_STATIC_DRAW);
-
-  return 0;
 }
 
 /************************************************************/
@@ -135,6 +150,9 @@ GLFWwindow *Visualization_OpenGL::getWindow() { return m_window; }
 void Visualization_OpenGL::updateRocketLine(const Rocket *f_rocket,
                                             const int f_gen,
                                             const int f_chrom) {
+  if (!m_doIt)
+    return;
+
   const int idx{3 * (2 * f_gen + 1)};
 
   rockets_line[f_chrom * _SIZE_BUFFER_CHROMOSOME + idx + 0] =
@@ -159,6 +177,9 @@ void Visualization_OpenGL::updateRocketLine(const Rocket *f_rocket,
 /************************************************************/
 void Visualization_OpenGL::updateSingleRocket(const Rocket &f_rocket,
                                               const double f_elapsed) {
+  if (!m_doIt)
+    return;
+
   assert(0 <= f_elapsed <= 1);
 
   /* Formulaes:
@@ -211,6 +232,9 @@ void Visualization_OpenGL::updateSingleRocket(const Rocket &f_rocket,
 
 /************************************************************/
 void Visualization_OpenGL::drawPopulation() {
+  if (!m_doIt)
+    return;
+
   // Clear the screen.
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -268,6 +292,9 @@ void Visualization_OpenGL::drawPopulation() {
 
 /************************************************************/
 void Visualization_OpenGL::drawSingleRocket() {
+  if (!m_doIt)
+    return;
+
   // Clear the screen.
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -345,6 +372,9 @@ void Visualization_OpenGL::drawSingleRocket() {
 
 /************************************************************/
 void Visualization_OpenGL::end() {
+  if (!m_initDone || !m_doIt)
+    return;
+
   // Cleanup VBO
   glDeleteBuffers(1, &floorbuffer);
   glDeleteVertexArrays(1, &VertexArrayID);
@@ -354,6 +384,8 @@ void Visualization_OpenGL::end() {
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();
+
+  m_initDone = false;
 }
 
 /************************************************************/

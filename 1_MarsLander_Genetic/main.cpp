@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <vector>
 
+// WinApi header
+#include <windows.h>
+
 // Include MarsLander headers
 #include "Genetic.hpp"
 #include "Rocket.hpp"
@@ -18,33 +21,39 @@ extern const float _h{2999.f}; //!< Map height.
 extern bool _pause; //!< Play/pause status of the program.
 extern bool _close; //!< Close or not the main window.
 
+void status(HANDLE &hConsole, const bool boolean) {
+  SetConsoleTextAttribute(hConsole, (boolean ? 2 : 12));
+  std::cout << (boolean ? "ON" : "OFF");
+  SetConsoleTextAttribute(hConsole, 15);
+}
+void result(HANDLE &hConsole, const bool boolean) {
+  SetConsoleTextAttribute(hConsole, (boolean ? 2 : 12));
+  std::cout << (boolean ? "GOOD" : "FAILURE");
+  SetConsoleTextAttribute(hConsole, 15);
+}
+
 // #######################################################
 //
-//                        MAIN
+//                        GENETIC
 //
 // #######################################################
 
-int main() {
+bool solve(const Rocket &rocket, const int *level, const int size_level,
+           const bool visualize, const bool verbose, double &elapsedSec) {
   // -----------------------------------------------------
   //                   INITIALIZATION
   // -----------------------------------------------------
-  std::srand(time(NULL));
-
-  const Levels levels;
-  const int idxLevel = 7;
-
-  const Rocket rocket = levels.getRocket(idxLevel);
-  const std::vector<int> floor = levels.getFloor(idxLevel);
-  const int* level = floor.data();
-  const int size_level = levels.getSizeFloor(idxLevel);
 
   // Rocket, level and size_level are defined in `level.hpp`
   GeneticPopulation population(rocket, level, size_level);
 
-  Visualization_OpenGL visualization(rocket, level, size_level);
+  Visualization_OpenGL *visualization = Visualization_OpenGL::GetInstance();
 
-  if (visualization.initOpenGL() == -1)
-    return -1;
+  if (visualization->initOpenGL(visualize) != 0) {
+    elapsedSec = -1;
+    return false;
+  }
+  visualization->set(rocket, level, size_level, visualize);
 
   bool solutionFound{false};
   int generation{0};
@@ -65,8 +74,9 @@ int main() {
   //                  MAIN GENETIC LOOP
   // -----------------------------------------------------
   while (!solutionFound && !_close &&
-         glfwWindowShouldClose(visualization.getWindow()) == 0) {
-    std::cout << "Generation " << generation << std::endl;
+         glfwWindowShouldClose(visualization->getWindow()) == 0) {
+    if (verbose)
+      std::cout << "Generation " << generation << std::endl;
 
     // ...................................................
     //                 INCREMENTAL SEARCH
@@ -76,15 +86,18 @@ int main() {
     if (elapsed_seconds.count() > 0.15) {
       Gene *bestGen{population.getChromosome(0)->getGene(idxStart)};
 
-      std::cerr << "Approx done at generation " << generation << " - "
-                << generation - prevGeneration << std::endl;
-      std::cerr << "Idx: " << idxStart << std::endl;
-      std::cerr << "  Angle: " << (int)bestGen->angle << std::endl;
-      std::cerr << "  Power: " << (int)bestGen->thrust << std::endl;
+      if (verbose) {
+        std::cout << "Approx done at generation " << generation << " - "
+                  << generation - prevGeneration << std::endl;
+        std::cout << "Idx: " << idxStart << std::endl;
+        std::cout << "  Angle: " << (int)bestGen->angle << std::endl;
+        std::cout << "  Power: " << (int)bestGen->thrust << std::endl;
+      }
 
       population.rocket_save.updateRocket(bestGen->angle, bestGen->thrust);
-      std::cout << (int)population.rocket_save.angle << " "
-                << (int)population.rocket_save.thrust << std::endl;
+      if (verbose)
+        std::cout << (int)population.rocket_save.angle << " "
+                  << (int)population.rocket_save.thrust << std::endl;
 
       solutionIncremental.push_back({bestGen->angle, bestGen->thrust});
 
@@ -126,7 +139,8 @@ int main() {
 
               // Landing successful!
               if (k == population.landing_zone_id && rocket->isParamSuccess()) {
-                std::cout << "Landing SUCCESS!" << std::endl << std::endl;
+                if (verbose)
+                  std::cout << "Landing SUCCESS!" << std::endl << std::endl;
                 solutionFound = true;
                 idxChromosome = chrom;
                 idxGene = gen;
@@ -135,7 +149,7 @@ int main() {
             }
           }
         }
-        visualization.updateRocketLine(rocket, gen, chrom);
+        visualization->updateRocketLine(rocket, gen, chrom);
       }
     }
 
@@ -150,41 +164,47 @@ int main() {
     // ...................................................
     //                  OPENGL DISPLAY
     // ...................................................
-    visualization.drawPopulation();
+    visualization->drawPopulation();
   }
 
   std::chrono::duration<double> elapsed_seconds{
       std::chrono::high_resolution_clock::now() - start};
-  std::cout << "Execution time: " << elapsed_seconds.count() << "s"
-            << std::endl;
+  elapsedSec = elapsed_seconds.count();
+  if (verbose)
+    std::cout << "Execution time: " << elapsedSec << "s" << std::endl;
 
   // -----------------------------------------------------
   //                 DISPLAY THE SOLUTION
   // -----------------------------------------------------
-  if (solutionFound) {
-    std::cout << std::endl;
-    std::cout << "Solution found at:" << std::endl;
-    std::cout << "  Generation: " << generation << std::endl;
-    std::cout << "  Child: " << idxChromosome << std::endl;
-    std::cout << "  Gene: " << idxGene << std::endl << std::endl;
+  if (visualize && solutionFound) {
+    if (verbose) {
+      std::cout << std::endl;
+      std::cout << "Solution found at:" << std::endl;
+      std::cout << "  Generation: " << generation << std::endl;
+      std::cout << "  Child: " << idxChromosome << std::endl;
+      std::cout << "  Gene: " << idxGene << std::endl << std::endl;
+    }
 
     Rocket rocket_res{rocket};
 
     Chromosome *chromosome{population.getChromosome(idxChromosome)};
 
-    const int number_loop_within_1_sec{2};
+    const int number_loop_within_1_sec{50};
     double number_loop{1};
     int number_second{0};
-    rocket_res.debug();
+    if (verbose)
+      rocket_res.debug();
 
     // Check if the ESC key was pressed or the window was closed
-    while (!_close && glfwWindowShouldClose(visualization.getWindow()) == 0) {
+    while (!_close && rocket_res.isAlive &&
+           glfwWindowShouldClose(visualization->getWindow()) == 0) {
 
-      if (!_pause && rocket_res.isAlive) {
+      if (!_pause) {
         if (number_loop >= number_loop_within_1_sec) {
           number_loop = 0;
 
-          rocket_res.debug(number_second);
+          if (verbose)
+            rocket_res.debug(number_second);
 
           if (number_second < idxStart) {
             rocket_res.updateRocket(solutionIncremental[number_second].angle,
@@ -193,16 +213,19 @@ int main() {
             rocket_res.updateRocket(chromosome->getGene(number_second)->angle,
                                     chromosome->getGene(number_second)->thrust);
           }
-          std::cout << "  Request: " << (int)rocket_res.angle << " "
-                    << (int)rocket_res.thrust << std::endl
-                    << std::endl;
 
-          rocket_res.debug();
+          if (verbose)
+            std::cout << "  Request: " << (int)rocket_res.angle << " "
+                      << (int)rocket_res.thrust << std::endl
+                      << std::endl;
+
+          if (verbose)
+            rocket_res.debug();
           number_second++;
         }
 
         number_loop++;
-        visualization.updateSingleRocket(
+        visualization->updateSingleRocket(
             rocket_res, number_loop / number_loop_within_1_sec);
 
         const Line_d prev_curr{{rocket_res.pX, rocket_res.pY},
@@ -218,15 +241,247 @@ int main() {
         }
       }
 
-      visualization.drawSingleRocket();
+      visualization->drawSingleRocket();
     }
   }
-  // No solution
-  else {
-    std::cout << "No solution found..." << std::endl;
+
+  return solutionFound;
+}
+
+// #######################################################
+//
+//                        MAIN
+//
+// #######################################################
+
+int main() {
+  std::srand(time(NULL));
+
+  const Levels levels;
+
+  bool withVisu = true;
+  bool verbose = false;
+
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  std::string message;
+  std::vector<double> elapsed;
+  int idxLevel;
+
+  // -----------------------------------------------------
+  //                TOOL INFINITE LOOP
+  // -----------------------------------------------------
+  while (1) {
+    // system("CLS");
+
+    // ...................................................
+    //                      TITLE
+    // ...................................................
+    SetConsoleTextAttribute(hConsole, 9); // Blue color
+    std::cout << " __       __                                      __         "
+                 "                        __\n"
+              << "|  \\     /  \\                                    |  \\     "
+                 "                          |  \\\n"
+              << "| $$\\   /  $$  ______    ______    _______       | $$       "
+                 "______   _______    ____| $$  ______    ______\n"
+              << "| $$$\\ /  $$$ |      \\  /      \\  /       \\      | $$    "
+                 "  |      \\ |       \\  /      $$ /      \\  /      \\\n"
+              << "| $$$$\\  $$$$  \\$$$$$$\\|  $$$$$$\\|  $$$$$$$      | $$    "
+                 "   \\$$$$$$\\| $$$$$$$\\|  $$$$$$$|  $$$$$$\\|  $$$$$$\\\n"
+              << "| $$\\$$ $$ $$ /      $$| $$   \\$$ \\$$    \\       | $$    "
+                 "  /      $$| $$  | $$| $$  | $$| $$    $$| $$   \\$$\n"
+              << "| $$ \\$$$| $$|  $$$$$$$| $$       _\\$$$$$$\\      | "
+                 "$$_____|  $$$$$$$| $$  | $$| $$__| $$| $$$$$$$$| $$\n"
+              << "| $$  \\$ | $$ \\$$    $$| $$      |       $$      | $$     "
+                 "\\\\$$    $$| $$  | $$ \\$$    $$ \\$$     \\| $$\n"
+              << " \\$$      \\$$  \\$$$$$$$ \\$$       \\$$$$$$$        "
+                 "\\$$$$$$$$ \\$$$$$$$ \\$$   \\$$  \\$$$$$$$  \\$$$$$$$ \\$$\n"
+              << "                      ______                                 "
+                 " __      __\n"
+              << "                     /      \\                               "
+                 " |  \\    |  \\\n"
+              << "                    |  $$$$$$\\  ______   _______    ______  "
+                 "_| $$_    \$$  _______\n"
+              << "                    | $$ __\\$$ /      \\ |       \\  /      "
+                 "\\|   $$ \\  |  \\ /       \\\n"
+              << "                    | $$|    \\|  $$$$$$\\| $$$$$$$\\|  "
+                 "$$$$$$\\\\$$$$$$  | $$|  $$$$$$$\n"
+              << "                    | $$ \\$$$$| $$    $$| $$  | $$| $$    "
+                 "$$ | $$ __ | $$| $$\n"
+              << "                    | $$__| $$| $$$$$$$$| $$  | $$| $$$$$$$$ "
+                 "| $$|  \\| $$| $$_____\n"
+              << "                     \\$$    $$ \\$$     \\| $$  | $$ \\$$   "
+                 "  \\  \\$$  $$| $$ \\$$     \\\n"
+              << "                      \\$$$$$$   \\$$$$$$$ \\$$   \\$$  "
+                 "\\$$$$$$$   \\$$$$  \\$$  \\$$$$$$$\n\n";
+    SetConsoleTextAttribute(hConsole, 15); // White color
+
+    // ...................................................
+    //                  DISPLAY MESSAGE
+    // ...................................................
+    if (message.size() > 0) {
+      // Status update
+      if (message[0] == '=') {
+        SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+        std::cout << message << std::endl;
+        SetConsoleTextAttribute(hConsole, 15); // White color
+      }
+      // Wrong input
+      else if (message[0] == '/') {
+        SetConsoleTextAttribute(hConsole, 12); // Red color
+        std::cout << message << std::endl;
+        SetConsoleTextAttribute(hConsole, 15); // White color
+      }
+      // Test result
+      else {
+        std::cout << "TEST RESULTS:" << std::endl;
+        // Single test
+        if (message.size() == 1) {
+          std::cout << "  Test on ";
+          SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+          std::cout << "level " << idxLevel;
+          SetConsoleTextAttribute(hConsole, 15); // White color
+          std::cout << ": [";
+          result(hConsole, message == "Y");
+          std::cout << "] - ";
+          if (elapsed[0] == -1) {
+            SetConsoleTextAttribute(hConsole, 12); // Red color
+            std::cout << "Error on OpenGL Init...";
+          } else {
+            SetConsoleTextAttribute(hConsole, 14); // Yellow color
+            std::cout << elapsed[0] << "s";
+          }
+          SetConsoleTextAttribute(hConsole, 15); // White color
+          std::cout << std::endl;
+        }
+        // Full test
+        else {
+          for (int i = 0; i < message.size(); ++i) {
+            std::cout << "  Test on ";
+            SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+            std::cout << "level " << i + 1;
+            SetConsoleTextAttribute(hConsole, 15); // White color
+            std::cout << ": [";
+            result(hConsole, message[i] == 'Y');
+            std::cout << "] - ";
+            if (elapsed[i] == -1) {
+              SetConsoleTextAttribute(hConsole, 12); // Red color
+              std::cout << "Error on OpenGL Init...";
+            } else {
+              SetConsoleTextAttribute(hConsole, 14); // Yellow color
+              std::cout << elapsed[i] << "s";
+            }
+            SetConsoleTextAttribute(hConsole, 15); // White color
+            std::cout << std::endl;
+          }
+        }
+      }
+      message = "";
+    }
+
+    // ...................................................
+    //             DISPLAY CHOICES OF ACTIONS
+    // ...................................................
+    std::cout << "" << std::endl;
+    std::cout << "Select an action: " << std::endl;
+    std::cout << "  -        'Q': Quit the tool" << std::endl;
+    std::cout << "  -        'D': Change the display status, current is [";
+    status(hConsole, withVisu);
+    std::cout << "] (it's faster when it's OFF)" << std::endl;
+    std::cout << "  -        'V': Change the verbose status, current is [";
+    status(hConsole, verbose);
+    std::cout << "] ("
+              << (verbose ? "Do you really know what you are doing?"
+                          : "Please, don't change that")
+              << ")" << std::endl;
+    std::cout << "  -        '0': Run the algorithm on all the levels"
+              << std::endl;
+    std::cout << "  - '1' -> '7': Level to run the algorithm on" << std::endl;
+    std::cout << std::endl;
+
+    // ...................................................
+    //                 READ THE USER INPUT
+    // ...................................................
+    std::string input;
+    std::cout << "? ";
+    std::cin >> input;
+
+    // User pressed only 1 char
+    if (input.size() == 1) {
+      // User pressed a digit
+      if (isdigit(input[0])) {
+        idxLevel = input[0] - '0';
+        // User pressed a valid digit
+        if (idxLevel < 8) {
+          elapsed.clear();
+          double elapsedSec;
+          // User wants full test
+          if (idxLevel == 0) {
+            for (int i = 1; i < 8; ++i) {
+              const Rocket rocket = levels.getRocket(i);
+              const std::vector<int> floor = levels.getFloor(i);
+              const int size_level = levels.getSizeFloor(i);
+
+              bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
+                                    verbose, elapsedSec);
+
+              elapsed.push_back(elapsedSec);
+              if (isSolved) {
+                message += "Y";
+              } else if (elapsedSec == -1) {
+                message += "?";
+              } else {
+                message += "N";
+              }
+            }
+          }
+          // User wants single test
+          else {
+            const Rocket rocket = levels.getRocket(idxLevel);
+            const std::vector<int> floor = levels.getFloor(idxLevel);
+            const int size_level = levels.getSizeFloor(idxLevel);
+
+            bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
+                                  verbose, elapsedSec);
+
+            elapsed.push_back(elapsedSec);
+            if (isSolved) {
+              message += "Y";
+            } else if (elapsedSec == -1) {
+              message += "?";
+            } else {
+              message += "N";
+            }
+          }
+          continue;
+        }
+      }
+      // User updates verbose status
+      else if (input == "V" || input == "v") {
+        message = "=> Verbose status successfully changed!";
+        verbose = !verbose;
+        continue;
+      }
+      // User updates display status
+      else if (input == "D" || input == "d") {
+        message = "=> Display status successfully changed!";
+        withVisu = !withVisu;
+        if (!withVisu)
+          Visualization_OpenGL::GetInstance()->end();
+        continue;
+      }
+      // User wants to quit the tool
+      else if (input == "Q" || input == "q") {
+        break;
+      }
+    }
+    message = "/!\\ Invalid input: `" + input + "`... Please try again /!\\";
   }
 
-  visualization.end();
+  // -----------------------------------------------------
+  //                END OF THE TOOL
+  // -----------------------------------------------------
+  Visualization_OpenGL::GetInstance()->end();
 
   return 0;
 }

@@ -22,11 +22,10 @@ constexpr size_t _SIZE_BUFFER_CHROMOSOME{3 * 2 * _CHROMOSOME_SIZE};
 //! brief  Visualization class
 class Visualization_OpenGL {
 public:
-  //! @brief  C'tor.
+  //! @brief  Get the singleton instance.
   //!
-  //! @param[in] f_rocket  The rocket to initialize with.
-  Visualization_OpenGL(const Rocket &f_rocket, const int *const level,
-                       const int size_level);
+  //! @return The singleton instance.
+  static Visualization_OpenGL *GetInstance() { return INSTANCE; }
 
   //! @brief  Initialize the environment:
   //!     - Initialise GLFW
@@ -43,7 +42,10 @@ public:
   //! @param[out] floorbuffer
   //!
   //! @return 0 on success, -1 on failure.
-  int initOpenGL();
+  int initOpenGL(const bool doIt);
+
+  void set(const Rocket &f_rocket, const int *const level, const int size_level,
+           const bool doIt);
 
   //! @brief  Get a pointer to the opaque windows object.
   //!
@@ -74,6 +76,11 @@ public:
   void end();
 
 private:
+  //! @brief  C'tor.
+  //!
+  //! @param[in] f_rocket  The rocket to initialize with.
+  Visualization_OpenGL();
+
   GLFWwindow *m_window; //!< The main window.
 
   GLuint VertexArrayID;   //!< ID of the vertex array.
@@ -88,8 +95,13 @@ private:
   GLfloat GL_rocket_buffer_data[9]; //!< Single rocket triangle buffer.
   GLfloat GL_fire_buffer_data[6];   //!< Single rocket thrust power buffer.
 
-  const int *const m_level; //!< Poiter to the current floor data buffer.
-  const int m_size_level;   //!< Size of the current floor data buffer.
+  const int *m_level; //!< Poiter to the current floor data buffer.
+  int m_size_level;   //!< Size of the current floor data buffer.
+
+  bool m_doIt;     //!< Whether or not to do the visualization.
+  bool m_initDone; //!< Whether or not the initialization is done.
+
+  static Visualization_OpenGL *INSTANCE; //!< Singleton instance.
 };
 
 //! @brief  Callback functions on keypress events. Handles:
