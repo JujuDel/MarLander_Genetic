@@ -385,6 +385,7 @@ void Visualization_OpenGL::end() {
   // Close OpenGL window and terminate GLFW
   glfwTerminate();
 
+  m_window = nullptr;
   m_initDone = false;
 }
 

@@ -435,8 +435,18 @@ int main() {
               const std::vector<int> floor = levels.getFloor(i);
               const int size_level = levels.getSizeFloor(i);
 
+              std::cout << "Testing on ";
+              SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+              std::cout << "level " << i;
+              SetConsoleTextAttribute(hConsole, 15); // White color
+              std::cout << "... ";
+
               bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
                                     verbose, elapsedSec, fuel);
+
+              std::cout << "[";
+              result(hConsole, isSolved);
+              std::cout << "]" << std::endl;
 
               elapsed.push_back(elapsedSec);
               fuels.push_back(fuel);
@@ -454,6 +464,12 @@ int main() {
             const Rocket rocket = levels.getRocket(idxLevel);
             const std::vector<int> floor = levels.getFloor(idxLevel);
             const int size_level = levels.getSizeFloor(idxLevel);
+
+            std::cout << "Testing on ";
+            SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+            std::cout << "level " << idxLevel;
+            SetConsoleTextAttribute(hConsole, 15); // White color
+            std::cout << "... " << std::endl;
 
             bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
                                   verbose, elapsedSec, fuel);
