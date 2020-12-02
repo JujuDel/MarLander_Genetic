@@ -39,7 +39,8 @@ void result(HANDLE &hConsole, const bool boolean) {
 // #######################################################
 
 bool solve(const Rocket &rocket, const int *level, const int size_level,
-           const bool visualize, const bool verbose, double &elapsedSec) {
+           const bool visualize, const bool verbose, double &elapsedSec,
+           int &fuelLeft) {
   // -----------------------------------------------------
   //                   INITIALIZATION
   // -----------------------------------------------------
@@ -144,6 +145,7 @@ bool solve(const Rocket &rocket, const int *level, const int size_level,
                 solutionFound = true;
                 idxChromosome = chrom;
                 idxGene = gen;
+                fuelLeft = rocket->fuel;
               }
               break;
             }
@@ -266,13 +268,14 @@ int main() {
 
   std::string message;
   std::vector<double> elapsed;
+  std::vector<int> fuels;
   int idxLevel;
 
   // -----------------------------------------------------
   //                TOOL INFINITE LOOP
   // -----------------------------------------------------
   while (1) {
-    // system("CLS");
+    system("CLS");
 
     // ...................................................
     //                      TITLE
@@ -348,6 +351,10 @@ int main() {
             SetConsoleTextAttribute(hConsole, 12); // Red color
             std::cout << "Error on OpenGL Init...";
           } else {
+            SetConsoleTextAttribute(hConsole, 13); // Magenta color
+            std::cout << fuels[0] << "L";
+            SetConsoleTextAttribute(hConsole, 15); // White color
+            std::cout << " of fuel left - ";
             SetConsoleTextAttribute(hConsole, 14); // Yellow color
             std::cout << elapsed[0] << "s";
           }
@@ -368,6 +375,10 @@ int main() {
               SetConsoleTextAttribute(hConsole, 12); // Red color
               std::cout << "Error on OpenGL Init...";
             } else {
+              SetConsoleTextAttribute(hConsole, 13); // Magenta color
+              std::cout << fuels[i] << "L";
+              SetConsoleTextAttribute(hConsole, 15); // White color
+              std::cout << " of fuel left - ";
               SetConsoleTextAttribute(hConsole, 14); // Yellow color
               std::cout << elapsed[i] << "s";
             }
@@ -414,7 +425,9 @@ int main() {
         // User pressed a valid digit
         if (idxLevel < 8) {
           elapsed.clear();
+          fuels.clear();
           double elapsedSec;
+          int fuel;
           // User wants full test
           if (idxLevel == 0) {
             for (int i = 1; i < 8; ++i) {
@@ -423,9 +436,10 @@ int main() {
               const int size_level = levels.getSizeFloor(i);
 
               bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
-                                    verbose, elapsedSec);
+                                    verbose, elapsedSec, fuel);
 
               elapsed.push_back(elapsedSec);
+              fuels.push_back(fuel);
               if (isSolved) {
                 message += "Y";
               } else if (elapsedSec == -1) {
@@ -442,9 +456,10 @@ int main() {
             const int size_level = levels.getSizeFloor(idxLevel);
 
             bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
-                                  verbose, elapsedSec);
+                                  verbose, elapsedSec, fuel);
 
             elapsed.push_back(elapsedSec);
+            fuels.push_back(fuel);
             if (isSolved) {
               message += "Y";
             } else if (elapsedSec == -1) {
