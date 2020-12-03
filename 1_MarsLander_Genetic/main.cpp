@@ -1,6 +1,7 @@
 // Include standard headers
 #include <chrono>
 #include <iostream>
+#include <numeric>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -101,6 +102,22 @@ bool solve(const Rocket &rocket, const int *level, const int size_level,
                   << (int)population.rocket_save.thrust << std::endl;
 
       solutionIncremental.push_back({bestGen->angle, bestGen->thrust});
+
+      const Line_d prev_curr{
+          {population.rocket_save.pX, population.rocket_save.pY},
+          {population.rocket_save.x, population.rocket_save.y}};
+      for (int k = 1; k < size_level; ++k) {
+        const Line_d floor{{level[2 * (k - 1)], level[2 * (k - 1) + 1]},
+                           {level[2 * k], level[2 * k + 1]}};
+        if (population.rocket_save.x < 0 || population.rocket_save.x > _w ||
+            population.rocket_save.y < 0 || population.rocket_save.y > _h ||
+            isIntersect(prev_curr, floor)) {
+          population.rocket_save.isAlive = false;
+        }
+      }
+
+      if (!population.rocket_save.isAlive)
+        break;
 
       prevGeneration = generation;
       idxStart++;
@@ -337,7 +354,7 @@ int main() {
       }
       // Test result
       else {
-        std::cout << "TEST RESULTS:" << std::endl;
+        std::cout << "TESTS RESULTS:" << std::endl;
         // Single test
         if (message.size() == 1) {
           std::cout << "  Test on ";
@@ -385,6 +402,13 @@ int main() {
             SetConsoleTextAttribute(hConsole, 15); // White color
             std::cout << std::endl;
           }
+          if (message.size() == 5) {
+            std::cout << "Optimization final score: ";
+            SetConsoleTextAttribute(hConsole, 13); // Magenta color
+            double sumFuel = std::accumulate(fuels.begin(), fuels.end(), 0);
+            std::cout << sumFuel << std::endl;
+            SetConsoleTextAttribute(hConsole, 15); // White color
+          }
         }
       }
       message = "";
@@ -405,7 +429,9 @@ int main() {
               << (verbose ? "Do you really know what you are doing?"
                           : "Please, don't change that")
               << ")" << std::endl;
-    std::cout << "  -        '0': Run the algorithm on all the levels"
+    std::cout << "  -        'F': Run the algorithm on all the levels"
+              << std::endl;
+    std::cout << "  -        'O': Run the algorithm on the optimization levels"
               << std::endl;
     std::cout << "  - '1' -> '7': Level to run the algorithm on" << std::endl;
     std::cout << std::endl;
@@ -423,69 +449,84 @@ int main() {
       if (isdigit(input[0])) {
         idxLevel = input[0] - '0';
         // User pressed a valid digit
-        if (idxLevel < 8) {
+        if (0 < idxLevel && idxLevel < 8) {
           elapsed.clear();
           fuels.clear();
+          const Rocket rocket = levels.getRocket(idxLevel);
+          const std::vector<int> floor = levels.getFloor(idxLevel);
+          const int size_level = levels.getSizeFloor(idxLevel);
+
+          std::cout << "Testing on ";
+          SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+          std::cout << "level " << idxLevel;
+          SetConsoleTextAttribute(hConsole, 15); // White color
+          std::cout << "... " << std::endl;
+
           double elapsedSec;
           int fuel;
-          // User wants full test
-          if (idxLevel == 0) {
-            for (int i = 1; i < 8; ++i) {
-              const Rocket rocket = levels.getRocket(i);
-              const std::vector<int> floor = levels.getFloor(i);
-              const int size_level = levels.getSizeFloor(i);
+          bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
+                                verbose, elapsedSec, fuel);
 
-              std::cout << "Testing on ";
-              SetConsoleTextAttribute(hConsole, 11); // Turquoise color
-              std::cout << "level " << i;
-              SetConsoleTextAttribute(hConsole, 15); // White color
-              std::cout << "... ";
-
-              bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
-                                    verbose, elapsedSec, fuel);
-
-              std::cout << "[";
-              result(hConsole, isSolved);
-              std::cout << "]" << std::endl;
-
-              elapsed.push_back(elapsedSec);
-              fuels.push_back(fuel);
-              if (isSolved) {
-                message += "Y";
-              } else if (elapsedSec == -1) {
-                message += "?";
-              } else {
-                message += "N";
-              }
-            }
-          }
-          // User wants single test
-          else {
-            const Rocket rocket = levels.getRocket(idxLevel);
-            const std::vector<int> floor = levels.getFloor(idxLevel);
-            const int size_level = levels.getSizeFloor(idxLevel);
-
-            std::cout << "Testing on ";
-            SetConsoleTextAttribute(hConsole, 11); // Turquoise color
-            std::cout << "level " << idxLevel;
-            SetConsoleTextAttribute(hConsole, 15); // White color
-            std::cout << "... " << std::endl;
-
-            bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
-                                  verbose, elapsedSec, fuel);
-
-            elapsed.push_back(elapsedSec);
-            fuels.push_back(fuel);
-            if (isSolved) {
-              message += "Y";
-            } else if (elapsedSec == -1) {
-              message += "?";
-            } else {
-              message += "N";
-            }
+          elapsed.push_back(elapsedSec);
+          fuels.push_back(fuel);
+          if (isSolved) {
+            message += "Y";
+          } else if (elapsedSec == -1) {
+            message += "?";
+          } else {
+            message += "N";
           }
           continue;
         }
+      }
+      // User wants a series of test
+      else if (input == "F" || input == "f" || input == "O" || input == "o") {
+        int nbLevel = (input == "F" || input == "f") ? 7 : 5;
+        for (int i = 1; i <= nbLevel; ++i) {
+          const Rocket rocket = levels.getRocket(i);
+          const std::vector<int> floor = levels.getFloor(i);
+          const int size_level = levels.getSizeFloor(i);
+
+          std::cout << "Testing on ";
+          SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+          std::cout << "level " << i;
+          SetConsoleTextAttribute(hConsole, 15); // White color
+          std::cout << "... ";
+
+          double elapsedSec;
+          int fuel;
+          bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
+                                verbose, elapsedSec, fuel);
+          elapsed.push_back(elapsedSec);
+          if (isSolved) {
+            message += "Y";
+            fuels.push_back(fuel);
+          } else if (elapsedSec == -1) {
+            message += "?";
+            fuels.push_back(0);
+          } else {
+            message += "N";
+            fuels.push_back(0);
+          }
+
+          std::cout << "[";
+          result(hConsole, isSolved);
+          std::cout << "] - ";
+          if (elapsedSec == -1) {
+            SetConsoleTextAttribute(hConsole, 12); // Red color
+            std::cout << "Error on OpenGL Init...";
+          } else {
+            SetConsoleTextAttribute(hConsole, 13); // Magenta color
+            std::cout << fuels[i - 1] << "L";
+            SetConsoleTextAttribute(hConsole, 15); // White color
+            std::cout << " of fuel left - ";
+            SetConsoleTextAttribute(hConsole, 14); // Yellow color
+            std::cout << elapsed[i - 1] << "s";
+          }
+          SetConsoleTextAttribute(hConsole, 15); // White color
+          std::cout << std::endl;
+        }
+        continue;
       }
       // User updates verbose status
       else if (input == "V" || input == "v") {
