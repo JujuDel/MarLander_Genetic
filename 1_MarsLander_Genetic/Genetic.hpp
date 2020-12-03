@@ -13,7 +13,7 @@ constexpr int _CHROMOSOME_SIZE{200}; //!< Amount of gene per chromosome.
 constexpr int _POPULATION_SIZE{100}; //!< Amount of chromosome per population.
 
 constexpr double _ELITISM_RATIO{0.1}; //!< Elitism rate.
-constexpr double _MUTATION_RATE{0.1}; //!< Mutation rate.
+constexpr double _MUTATION_RATE{0.2}; //!< Mutation rate.
 constexpr int _ELITISM_IDX{static_cast<int>(
     _ELITISM_RATIO * _POPULATION_SIZE)}; //!< Idx of the last elitism selection.
 
