@@ -1,17 +1,50 @@
 
+
 # MarLander - Genetic Algorithm
 
 Resolve the series of CodinGame's problem called Mars Lander using a Genetic Algorithm.
+
+```console
+ __       __                                      __                                 __
+|  \     /  \                                    |  \                               |  \
+| $$\   /  $$  ______    ______    _______       | $$       ______   _______    ____| $$  ______    ______
+| $$$\ /  $$$ |      \  /      \  /       \      | $$      |      \ |       \  /      $$ /      \  /      \
+| $$$$\  $$$$  \$$$$$$\|  $$$$$$\|  $$$$$$$      | $$       \$$$$$$\| $$$$$$$\|  $$$$$$$|  $$$$$$\|  $$$$$$\
+| $$\$$ $$ $$ /      $$| $$   \$$ \$$    \       | $$      /      $$| $$  | $$| $$  | $$| $$    $$| $$   \$$
+| $$ \$$$| $$|  $$$$$$$| $$       _\$$$$$$\      | $$_____|  $$$$$$$| $$  | $$| $$__| $$| $$$$$$$$| $$
+| $$  \$ | $$ \$$    $$| $$      |       $$      | $$     \\$$    $$| $$  | $$ \$$    $$ \$$     \| $$
+ \$$      \$$  \$$$$$$$ \$$       \$$$$$$$        \$$$$$$$$ \$$$$$$$ \$$   \$$  \$$$$$$$  \$$$$$$$ \$$
+                      ______                                  __      __
+                     /      \                                |  \    |  \
+                    |  $$$$$$\  ______   _______    ______  _| $$_    $$  _______
+                    | $$ __\$$ /      \ |       \  /      \|   $$ \  |  \ /       \
+                    | $$|    \|  $$$$$$\| $$$$$$$\|  $$$$$$\\$$$$$$  | $$|  $$$$$$$
+                    | $$ \$$$$| $$    $$| $$  | $$| $$    $$ | $$ __ | $$| $$
+                    | $$__| $$| $$$$$$$$| $$  | $$| $$$$$$$$ | $$|  \| $$| $$_____
+                     \$$    $$ \$$     \| $$  | $$ \$$     \  \$$  $$| $$ \$$     \
+                      \$$$$$$   \$$$$$$$ \$$   \$$  \$$$$$$$   \$$$$  \$$  \$$$$$$$
+
+
+Select an action:
+  -        'Q': Quit the tool
+  -        'D': Change the display status, current is [ON] (it's faster when it's OFF)
+  -        'V': Change the verbose status, current is [OFF] (Please, don't change that)
+  -        'F': Run the algorithm on all the levels
+  -        'O': Run the algorithm on the optimization levels
+  - '1' -> '7': Level to run the algorithm on
+
+?
+```
 
 Incremental research | Solution found
 :---: | :---:
 ![gif7_1](data/gif/level7_1.gif) | ![gif7_2](data/gif/level7_2.gif)
 
 Links of the problems:
- - [Mars Lander - Episode 1](https://www.codingame.com/ide/puzzle/mars-lander-episode-1) - Easy
- - [Mars Lander - Episode 2](https://www.codingame.com/ide/puzzle/mars-lander-episode-2) - Medium
- - [Mars Lander - Episode 3](https://www.codingame.com/ide/puzzle/mars-lander-episode-3) - Very hard
- - [Mars Lander - Optimization](https://www.codingame.com/ide/puzzle/mars-lander)
+ - [Mars Lander - Episode 1](https://www.codingame.com/ide/puzzle/mars-lander-episode-1) - Easy - 100%
+ - [Mars Lander - Episode 2](https://www.codingame.com/ide/puzzle/mars-lander-episode-2) - Medium - 100%
+ - [Mars Lander - Episode 3](https://www.codingame.com/ide/puzzle/mars-lander-episode-3) - Very hard - 100%
+ - [Mars Lander - Optimization](https://www.codingame.com/ide/puzzle/mars-lander) - 310th
 
 Solution developed in ***C++*** and using ***modern OpenGL*** for the visualization.
 
