@@ -4,47 +4,17 @@
 
 Resolve the series of CodinGame's problem called Mars Lander using a Genetic Algorithm.
 
-```console
- __       __                                      __                                 __
-|  \     /  \                                    |  \                               |  \
-| $$\   /  $$  ______    ______    _______       | $$       ______   _______    ____| $$  ______    ______
-| $$$\ /  $$$ |      \  /      \  /       \      | $$      |      \ |       \  /      $$ /      \  /      \
-| $$$$\  $$$$  \$$$$$$\|  $$$$$$\|  $$$$$$$      | $$       \$$$$$$\| $$$$$$$\|  $$$$$$$|  $$$$$$\|  $$$$$$\
-| $$\$$ $$ $$ /      $$| $$   \$$ \$$    \       | $$      /      $$| $$  | $$| $$  | $$| $$    $$| $$   \$$
-| $$ \$$$| $$|  $$$$$$$| $$       _\$$$$$$\      | $$_____|  $$$$$$$| $$  | $$| $$__| $$| $$$$$$$$| $$
-| $$  \$ | $$ \$$    $$| $$      |       $$      | $$     \\$$    $$| $$  | $$ \$$    $$ \$$     \| $$
- \$$      \$$  \$$$$$$$ \$$       \$$$$$$$        \$$$$$$$$ \$$$$$$$ \$$   \$$  \$$$$$$$  \$$$$$$$ \$$
-                      ______                                  __      __
-                     /      \                                |  \    |  \
-                    |  $$$$$$\  ______   _______    ______  _| $$_    $$  _______
-                    | $$ __\$$ /      \ |       \  /      \|   $$ \  |  \ /       \
-                    | $$|    \|  $$$$$$\| $$$$$$$\|  $$$$$$\\$$$$$$  | $$|  $$$$$$$
-                    | $$ \$$$$| $$    $$| $$  | $$| $$    $$ | $$ __ | $$| $$
-                    | $$__| $$| $$$$$$$$| $$  | $$| $$$$$$$$ | $$|  \| $$| $$_____
-                     \$$    $$ \$$     \| $$  | $$ \$$     \  \$$  $$| $$ \$$     \
-                      \$$$$$$   \$$$$$$$ \$$   \$$  \$$$$$$$   \$$$$  \$$  \$$$$$$$
-
-
-Select an action:
-  -        'Q': Quit the tool
-  -        'D': Change the display status, current is [ON] (it's faster when it's OFF)
-  -        'V': Change the verbose status, current is [OFF] (Please, don't change that)
-  -        'F': Run the algorithm on all the levels
-  -        'O': Run the algorithm on the optimization levels
-  - '1' -> '7': Level to run the algorithm on
-
-?
-```
-
-Incremental research | Solution found
-:---: | :---:
-![gif7_1](data/gif/level7_1.gif) | ![gif7_2](data/gif/level7_2.gif)
+![gifcmd](data/gif/cmd.gif)
 
 Links of the problems:
  - [Mars Lander - Episode 1](https://www.codingame.com/ide/puzzle/mars-lander-episode-1) - Easy - 100%
  - [Mars Lander - Episode 2](https://www.codingame.com/ide/puzzle/mars-lander-episode-2) - Medium - 100%
  - [Mars Lander - Episode 3](https://www.codingame.com/ide/puzzle/mars-lander-episode-3) - Very hard - 100%
  - [Mars Lander - Optimization](https://www.codingame.com/ide/puzzle/mars-lander) - 310th
+ 
+Some resolutions | The last level
+:---: | :---:
+![giflvls](data/gif/levels.gif) | ![gif7](data/gif/level7.gif)
 
 Solution developed in ***C++*** and using ***modern OpenGL*** for the visualization.
 
@@ -66,7 +36,6 @@ Then, under Visual Studio:
 
 1) Build -> Build Solution (once done you can play around with OpenGL with the project cube3D, my *Hello World* to check that everything is fine)
 2) On the *"Solution Explorer"* tab, right click on the *"MarsLander_Genetic"* project then *"Set as Startup Project"*
-3) In the file `levels.hpp`, you can modify the name of the macro `LEVEL7` (line 9) to whatever level you want (from 1 to 7 included).
 
 CMake-gui | Visual Studio
 :---: | :---:
@@ -116,30 +85,42 @@ We are now ready to go with the Genetic Algorithm!
 The architecture is as follow:
 
 ```cpp
-/* Rocket class
+/* Rocket struct
 *
 * A rocket object used to simulate the movements in the atmosphere of Mars.
 */
-class Rocket {
-public:
-    // Rocket c'tr
-    Rocket(const double f_x, const double f_y, const double f_vx, const double f_vy, const std::int8_t f_angle, const std::int8_t f_power, const int f_fuel);
-    
-    // Simulate the move of the rocket for 1sec with the given command
-    void updateRocket(const std::int8_t f_angle, const std::int8_t f_thrust);
+struct Rocket {
+  double pX, pY;      //!< Previous coordinates.
+  double x, y;        //!< Current coordinates.
+  double vx, vy;      //!< Rocket's velocity.
+  double ax, ay;      //!< Rocket's acceleration.
+  std::int8_t angle;  //!< Rocket's angle.
+  std::int8_t thrust; //!< Rocket's thrust power.
+  int fuel;           //!< Rocket's remaining fuel.
+  bool isAlive;       //!< Whether or not the Rocket is alive.
 
-private:
-    double pX;           //!< x-coordinate of the rocket 1sec ago
-    double pY;           //!< y-coordinate of the rocket 1sec ago
-    double x;            //!< current x-coordinate of the rocket
-    double y;            //!< current y-coordinate of the rocket
-    double vx;           //!< current horizontal velocity of the rocket
-    double vy;           //!< current vertical velocity of the rocket
-    double ax;           //!< current horizontal acceleration of the rocket
-    double ay;           //!< current vertical acceleration of the rocket
-    std::int8_t angle;   //!< current angle of the rocket
-    std::int8_t thrust;  //!< current thrust of the rocket
-    int fuel;            //!< amount of fuel (in L) still available of the rocket  
+  //! @brief  C'tor.
+  //!
+  //! @param[in] f_x, f_y    Initial coordinates.
+  //! @param[in] f_vx, f_vy  Initial velocity.
+  //! @param[in] f_angle     Initial angle.
+  //! @param[in] f_thrust    Initial thrust power.
+  //! @param[in] f_fuel      Initial fuel quantity.
+  Rocket(const double f_x = 0., const double f_y = 0., const double f_vx = 0.,
+         const double f_vy = 0., const std::int8_t f_angle = 0,
+         const std::int8_t f_thrust = 0, const int f_fuel = 0);
+
+  //! @brief  Apply the next angle and thrust requests.
+  //!
+  //! @param[in] f_angle  The angle request.
+  //! @param[in] f_thrust The thrust power request.
+  void updateRocket(const std::int8_t f_angle, const std::int8_t f_thrust);
+
+  //! @brief  Whether or not the current angle and speeds are in the good range
+  //!         to land.
+  //!
+  //! @return True if landing could be successful, else False.
+  bool isParamSuccess() const;
 };
 
 /* Gene struct
@@ -147,8 +128,8 @@ private:
 * Contains an angle/thrust request.
 */
 struct Gene {
-    std::int8_t angle;
-    std::int8_t thrust;
+  std::int8_t angle;
+  std::int8_t thrust;
 };
 
 /* Chromosome struct
@@ -156,8 +137,8 @@ struct Gene {
 * Contains a set of angle/thrust requests and the fitness score obtained by following them.
 */
 struct Chromosome {
-    Gene chromosome[_CHROMOSOME_SIZE];
-    double fitness;
+  Gene chromosome[_CHROMOSOME_SIZE];
+  double fitness;
 };
 
 /* Population class
@@ -166,22 +147,42 @@ struct Chromosome {
 * The two pointers 'population' and 'new_population' will alternatively point to 'populationA' and 'populationB'.
 * In that way, we reduce the amount of memory allocation/de-allocation and just stick with memory access.
 */
-class Population {
+class GeneticPopulation {
 public:
-    GeneticPopulation();
+  //! @brief  C'tor.
+  //!
+  //! @param[in] f_rocket       Initial rocket.
+  //! @param[in] f_floor_buffer Floor buffer data.
+  //! @param[in] f_size_floor   Size of the floor buffer.
+  GeneticPopulation(const Rocket &f_rocket, const int *f_floor_buffer,
+                    const int f_size_floor);
 
-    // Fill the next population by computing the fitness and performing elitism, selection, crossover and mutation.
-    void mutate();
+  //! @brief  Initialize all the rocket with the initial rocket.
+  void initRockets();
 
+  //! @brief  Initialize all the chromosomes with some random values
+  void initChromosomes();
+
+  //! @brief  Perform the mutation on the whole population.
+  //!
+  //! @param[in] idxStart  Incremental index where to start the mutation.
+  void mutate(const int idxStart);
+  
+  Rocket rocket_save;  //!< Initial rocket.
+  int landing_zone_id; //!< ID of the landing_zone among the floor segments.
+  
 private:
-    Chromosome populationA[_POPULATION_SIZE];	//!< One population of chromosomes
-    Chromosome populationB[_POPULATION_SIZE];	//!< Another one
+  Chromosome populationA[_POPULATION_SIZE]; //!< A population of chromosome.
+  Chromosome populationB[_POPULATION_SIZE]; //!< A population of chromosome.
 
-    Chromosome* population; 	   //!< Ptr to the current population
-    Chromosome* new_population;	//!< Ptr to the next population
-    
-    Rocket rockets_gen[_POPULATION_SIZE]; //!< The simulated rockets
-}
+  Chromosome *population;     //!< Pointer to the current population.
+  Chromosome *new_population; //!< Pointer to the next population.
+
+  Rocket rockets_gen[_POPULATION_SIZE]; //!< Rockets of the population.
+
+  const int *floor_buffer; //!< Floor buffer data.
+  const int size_floor;    //!< Size of the floor buffer data.
+};
 ```
 
 ### Fitness
