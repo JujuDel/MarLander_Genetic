@@ -4,6 +4,7 @@
 #include <numeric>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <vector>
 
 // WinApi header
@@ -22,15 +23,23 @@ extern const float _h{2999.f}; //!< Map height.
 extern bool _pause; //!< Play/pause status of the program.
 extern bool _close; //!< Close or not the main window.
 
+#define GREEN(hConsole) SetConsoleTextAttribute(hConsole, 2);
+#define BLUE(hConsole) SetConsoleTextAttribute(hConsole, 9);
+#define TURQUOISE(hConsole) SetConsoleTextAttribute(hConsole, 11);
+#define RED(hConsole) SetConsoleTextAttribute(hConsole, 12);
+#define MAGENTA(hConsole) SetConsoleTextAttribute(hConsole, 13);
+#define YELLOW(hConsole) SetConsoleTextAttribute(hConsole, 14);
+#define WHITE(hConsole) SetConsoleTextAttribute(hConsole, 15);
+
 void status(HANDLE &hConsole, const bool boolean) {
   SetConsoleTextAttribute(hConsole, (boolean ? 2 : 12));
   std::cout << (boolean ? "ON" : "OFF");
-  SetConsoleTextAttribute(hConsole, 15);
+  WHITE(hConsole)
 }
 void result(HANDLE &hConsole, const bool boolean) {
   SetConsoleTextAttribute(hConsole, (boolean ? 2 : 12));
   std::cout << (boolean ? "GOOD" : "FAILURE");
-  SetConsoleTextAttribute(hConsole, 15);
+  WHITE(hConsole)
 }
 
 // #######################################################
@@ -40,8 +49,8 @@ void result(HANDLE &hConsole, const bool boolean) {
 // #######################################################
 
 bool solve(const Rocket &rocket, const int *level, const int size_level,
-           const bool visualize, const bool verbose, double &elapsedSec,
-           int &fuelLeft) {
+           const bool visualize, const bool verbose, const int timer,
+           double &elapsedSec, int &fuelLeft) {
   // -----------------------------------------------------
   //                   INITIALIZATION
   // -----------------------------------------------------
@@ -85,7 +94,7 @@ bool solve(const Rocket &rocket, const int *level, const int size_level,
     // ...................................................
     std::chrono::duration<double> elapsed_seconds{
         std::chrono::high_resolution_clock::now() - start_loop};
-    if (elapsed_seconds.count() > 0.15) {
+    if (timer > 0 && elapsed_seconds.count() > timer) {
       Gene *bestGen{population.getChromosome(0)->getGene(idxStart)};
 
       if (verbose) {
@@ -273,6 +282,263 @@ bool solve(const Rocket &rocket, const int *level, const int size_level,
 //
 // #######################################################
 
+// -----------------------------------------------------
+//                         TITLE
+// -----------------------------------------------------
+void title(HANDLE &hConsole) {
+  WHITE(hConsole)
+  std::cout << " __       __                                      __       "
+               "               "
+               "           __\n|  \\     /  \\                             "
+               "       |  \\   "
+               "                            |  \\\n| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "\\   /  ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  ______    ______    _______       | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "       ______   _______    ____| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  ______    ______\n| ";
+  BLUE(hConsole) std::cout << "$$$";
+  WHITE(hConsole) std::cout << "\\ /  ";
+  BLUE(hConsole) std::cout << "$$$";
+  WHITE(hConsole) std::cout << " |      \\  /      \\  /       \\      | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "      |      \\ |       \\  /      ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " /      \\  /      \\\n| ";
+  BLUE(hConsole) std::cout << "$$$$";
+  WHITE(hConsole) std::cout << "\\  ";
+  BLUE(hConsole) std::cout << "$$$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\|  ";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\|  ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "      | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "       \\";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\| ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "\\|  ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "|  ";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\|  ";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\\n| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "\\";
+  BLUE(hConsole) std::cout << "$$ $$ $$";
+  WHITE(hConsole) std::cout << " /      ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "   \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "    \\       | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "      /      ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "   \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "\n| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "|  ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "       _\\";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\      | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "_____|  ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "__| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$$$$$$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "\n| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$";
+  WHITE(hConsole) std::cout << " | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "      |       ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "      | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "     \\\\";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "     \\| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "\n \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "      \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "       \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "        \\";
+  BLUE(hConsole) std::cout << "$$$$$$$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "   \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole)
+  std::cout << "\n                      ______                             "
+               "     __      "
+               "__\n                     /      \\                         "
+               "       |  \\   "
+               " |  \\\n                    |  ";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\  ______   _______    ______  _| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "_     ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  _______\n                    | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " __\\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " /      \\ |       \\  /      \\|   ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\  |  \\ /       \\\n                    | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "|    \\|  ";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\| ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "\\|  ";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "\\\\";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "|  ";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "\n                    | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << " | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " __ | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "\n                    | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "__| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$$$$$$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$$$$$$$";
+  WHITE(hConsole) std::cout << " | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "|  \\| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "_____\n                     \\";
+  BLUE(hConsole) std::cout << "$$    $$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "     \\| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  | ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "     \\  \\";
+  BLUE(hConsole) std::cout << "$$  $$";
+  WHITE(hConsole) std::cout << "| ";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "     \\\n                      \\";
+  BLUE(hConsole) std::cout << "$$$$$$";
+  WHITE(hConsole) std::cout << "   \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << " \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "   \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "   \\";
+  BLUE(hConsole) std::cout << "$$$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$";
+  WHITE(hConsole) std::cout << "  \\";
+  BLUE(hConsole) std::cout << "$$$$$$$";
+  WHITE(hConsole) std::cout << "\n\n";
+}
+
 int main() {
   std::srand(time(NULL));
 
@@ -280,6 +546,8 @@ int main() {
 
   bool withVisu = true;
   bool verbose = false;
+
+  double timer = 0.15;
 
   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -294,47 +562,8 @@ int main() {
   while (1) {
     system("CLS");
 
-    // ...................................................
-    //                      TITLE
-    // ...................................................
-    SetConsoleTextAttribute(hConsole, 9); // Blue color
-    std::cout << " __       __                                      __         "
-                 "                        __\n"
-              << "|  \\     /  \\                                    |  \\     "
-                 "                          |  \\\n"
-              << "| $$\\   /  $$  ______    ______    _______       | $$       "
-                 "______   _______    ____| $$  ______    ______\n"
-              << "| $$$\\ /  $$$ |      \\  /      \\  /       \\      | $$    "
-                 "  |      \\ |       \\  /      $$ /      \\  /      \\\n"
-              << "| $$$$\\  $$$$  \\$$$$$$\\|  $$$$$$\\|  $$$$$$$      | $$    "
-                 "   \\$$$$$$\\| $$$$$$$\\|  $$$$$$$|  $$$$$$\\|  $$$$$$\\\n"
-              << "| $$\\$$ $$ $$ /      $$| $$   \\$$ \\$$    \\       | $$    "
-                 "  /      $$| $$  | $$| $$  | $$| $$    $$| $$   \\$$\n"
-              << "| $$ \\$$$| $$|  $$$$$$$| $$       _\\$$$$$$\\      | "
-                 "$$_____|  $$$$$$$| $$  | $$| $$__| $$| $$$$$$$$| $$\n"
-              << "| $$  \\$ | $$ \\$$    $$| $$      |       $$      | $$     "
-                 "\\\\$$    $$| $$  | $$ \\$$    $$ \\$$     \\| $$\n"
-              << " \\$$      \\$$  \\$$$$$$$ \\$$       \\$$$$$$$        "
-                 "\\$$$$$$$$ \\$$$$$$$ \\$$   \\$$  \\$$$$$$$  \\$$$$$$$ \\$$\n"
-              << "                      ______                                 "
-                 " __      __\n"
-              << "                     /      \\                               "
-                 " |  \\    |  \\\n"
-              << "                    |  $$$$$$\\  ______   _______    ______  "
-                 "_| $$_    \$$  _______\n"
-              << "                    | $$ __\\$$ /      \\ |       \\  /      "
-                 "\\|   $$ \\  |  \\ /       \\\n"
-              << "                    | $$|    \\|  $$$$$$\\| $$$$$$$\\|  "
-                 "$$$$$$\\\\$$$$$$  | $$|  $$$$$$$\n"
-              << "                    | $$ \\$$$$| $$    $$| $$  | $$| $$    "
-                 "$$ | $$ __ | $$| $$\n"
-              << "                    | $$__| $$| $$$$$$$$| $$  | $$| $$$$$$$$ "
-                 "| $$|  \\| $$| $$_____\n"
-              << "                     \\$$    $$ \\$$     \\| $$  | $$ \\$$   "
-                 "  \\  \\$$  $$| $$ \\$$     \\\n"
-              << "                      \\$$$$$$   \\$$$$$$$ \\$$   \\$$  "
-                 "\\$$$$$$$   \\$$$$  \\$$  \\$$$$$$$\n\n";
-    SetConsoleTextAttribute(hConsole, 15); // White color
+    // Display the title
+    title(hConsole);
 
     // ...................................................
     //                  DISPLAY MESSAGE
@@ -342,15 +571,15 @@ int main() {
     if (message.size() > 0) {
       // Status update
       if (message[0] == '=') {
-        SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+        TURQUOISE(hConsole)
         std::cout << message << std::endl;
-        SetConsoleTextAttribute(hConsole, 15); // White color
+        WHITE(hConsole)
       }
       // Wrong input
       else if (message[0] == '/') {
-        SetConsoleTextAttribute(hConsole, 12); // Red color
+        RED(hConsole)
         std::cout << message << std::endl;
-        SetConsoleTextAttribute(hConsole, 15); // White color
+        WHITE(hConsole)
       }
       // Test result
       else {
@@ -358,56 +587,56 @@ int main() {
         // Single test
         if (message.size() == 1) {
           std::cout << "  Test on ";
-          SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+          TURQUOISE(hConsole)
           std::cout << "level " << idxLevel;
-          SetConsoleTextAttribute(hConsole, 15); // White color
+          WHITE(hConsole)
           std::cout << ": [";
           result(hConsole, message == "Y");
           std::cout << "] - ";
           if (elapsed[0] == -1) {
-            SetConsoleTextAttribute(hConsole, 12); // Red color
+            RED(hConsole)
             std::cout << "Error on OpenGL Init...";
           } else {
-            SetConsoleTextAttribute(hConsole, 13); // Magenta color
+            MAGENTA(hConsole)
             std::cout << fuels[0] << "L";
-            SetConsoleTextAttribute(hConsole, 15); // White color
+            WHITE(hConsole)
             std::cout << " of fuel left - ";
-            SetConsoleTextAttribute(hConsole, 14); // Yellow color
+            YELLOW(hConsole)
             std::cout << elapsed[0] << "s";
           }
-          SetConsoleTextAttribute(hConsole, 15); // White color
+          WHITE(hConsole)
           std::cout << std::endl;
         }
         // Full test
         else {
           for (int i = 0; i < message.size(); ++i) {
             std::cout << "  Test on ";
-            SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+            TURQUOISE(hConsole)
             std::cout << "level " << i + 1;
-            SetConsoleTextAttribute(hConsole, 15); // White color
+            WHITE(hConsole)
             std::cout << ": [";
             result(hConsole, message[i] == 'Y');
             std::cout << "] - ";
             if (elapsed[i] == -1) {
-              SetConsoleTextAttribute(hConsole, 12); // Red color
+              RED(hConsole)
               std::cout << "Error on OpenGL Init...";
             } else {
-              SetConsoleTextAttribute(hConsole, 13); // Magenta color
+              MAGENTA(hConsole)
               std::cout << fuels[i] << "L";
-              SetConsoleTextAttribute(hConsole, 15); // White color
+              WHITE(hConsole)
               std::cout << " of fuel left - ";
-              SetConsoleTextAttribute(hConsole, 14); // Yellow color
+              YELLOW(hConsole)
               std::cout << elapsed[i] << "s";
             }
-            SetConsoleTextAttribute(hConsole, 15); // White color
+            WHITE(hConsole)
             std::cout << std::endl;
           }
           if (message.size() == 5) {
             std::cout << "Optimization final score: ";
-            SetConsoleTextAttribute(hConsole, 13); // Magenta color
+            MAGENTA(hConsole)
             double sumFuel = std::accumulate(fuels.begin(), fuels.end(), 0);
             std::cout << sumFuel << std::endl;
-            SetConsoleTextAttribute(hConsole, 15); // White color
+            WHITE(hConsole)
           }
         }
       }
@@ -429,6 +658,11 @@ int main() {
               << (verbose ? "Do you really know what you are doing?"
                           : "Please, don't change that")
               << ")" << std::endl;
+    std::cout << "  -        'T': Timer (in sec) for the incremental search. 0 "
+                 "to disable the incremental search, current is [";
+    TURQUOISE(hConsole) std::cout << timer;
+    WHITE(hConsole)
+    std::cout << "]" << std::endl;
     std::cout << "  -        'F': Run the algorithm on all the levels"
               << std::endl;
     std::cout << "  -        'O': Run the algorithm on the optimization levels"
@@ -457,15 +691,15 @@ int main() {
           const int size_level = levels.getSizeFloor(idxLevel);
 
           std::cout << "Testing on ";
-          SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+          TURQUOISE(hConsole)
           std::cout << "level " << idxLevel;
-          SetConsoleTextAttribute(hConsole, 15); // White color
+          WHITE(hConsole)
           std::cout << "... " << std::endl;
 
           double elapsedSec;
           int fuel;
           bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
-                                verbose, elapsedSec, fuel);
+                                verbose, timer, elapsedSec, fuel);
 
           elapsed.push_back(elapsedSec);
           fuels.push_back(fuel);
@@ -488,15 +722,15 @@ int main() {
           const int size_level = levels.getSizeFloor(i);
 
           std::cout << "Testing on ";
-          SetConsoleTextAttribute(hConsole, 11); // Turquoise color
+          TURQUOISE(hConsole)
           std::cout << "level " << i;
-          SetConsoleTextAttribute(hConsole, 15); // White color
+          WHITE(hConsole)
           std::cout << "... ";
 
           double elapsedSec;
           int fuel;
           bool isSolved = solve(rocket, floor.data(), size_level, withVisu,
-                                verbose, elapsedSec, fuel);
+                                verbose, timer, elapsedSec, fuel);
           elapsed.push_back(elapsedSec);
           if (isSolved) {
             message += "Y";
@@ -513,17 +747,17 @@ int main() {
           result(hConsole, isSolved);
           std::cout << "] - ";
           if (elapsedSec == -1) {
-            SetConsoleTextAttribute(hConsole, 12); // Red color
+            RED(hConsole)
             std::cout << "Error on OpenGL Init...";
           } else {
-            SetConsoleTextAttribute(hConsole, 13); // Magenta color
+            MAGENTA(hConsole)
             std::cout << fuels[i - 1] << "L";
-            SetConsoleTextAttribute(hConsole, 15); // White color
+            WHITE(hConsole)
             std::cout << " of fuel left - ";
-            SetConsoleTextAttribute(hConsole, 14); // Yellow color
+            YELLOW(hConsole)
             std::cout << elapsed[i - 1] << "s";
           }
-          SetConsoleTextAttribute(hConsole, 15); // White color
+          WHITE(hConsole)
           std::cout << std::endl;
         }
         continue;
@@ -540,6 +774,37 @@ int main() {
         withVisu = !withVisu;
         if (!withVisu)
           Visualization_OpenGL::GetInstance()->end();
+        continue;
+      }
+      // User wants to update timer
+      else if (input == "T" || input == "t") {
+        while (1) {
+          std::cout << "The timer should be ";
+          GREEN(hConsole) std::cout << ">= 0";
+          WHITE(hConsole) std::cout << ". Which timer do you want? ";
+          std::cin >> input;
+          try {
+            double new_timer = std::stod(input);
+            if (new_timer >= 0) {
+              timer = new_timer;
+              break;
+            } else {
+              std::cout << "The new timer should be ";
+              RED(hConsole) std::cout << ">= 0";
+              WHITE(hConsole) std::cout << " but is '";
+              TURQUOISE(hConsole) std::cout << new_timer;
+              WHITE(hConsole) std::cout << "'" << std::endl;
+              continue;
+            }
+          } catch (...) {
+            RED(hConsole) std::cout << "An error";
+            WHITE(hConsole) std::cout << " occured with your input '";
+            TURQUOISE(hConsole) std::cout << input;
+            WHITE(hConsole) std::cout << "'" << std::endl;
+            continue;
+          }
+        }
+        message = "=> Timer successfully changed!";
         continue;
       }
       // User wants to quit the tool
