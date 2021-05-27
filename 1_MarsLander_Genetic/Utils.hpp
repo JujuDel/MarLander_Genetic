@@ -1,8 +1,12 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+#include <string>
+#include <vector>
+
 #include <GL/glew.h>
 
+#include "Genetic.hpp"
 #include "Rocket.hpp"
 
 //! @brief  Coord's struct
@@ -30,5 +34,11 @@ void applyRotation(Coord_d &P, const double c, const double s);
 //!
 //! @return True if l1 and l2 intersects, else false.
 bool isIntersect(Line_d l1, Line_d l2);
+
+//! @brief  Write the solution vector into a file.
+//!
+//! @param[in] f_filename  Name of the file.
+//! @param[in] f_solution  The solution vector to dump.
+void writeSolution(const std::string& f_fileName, const std::vector<Gene>& f_solution);
 
 #endif

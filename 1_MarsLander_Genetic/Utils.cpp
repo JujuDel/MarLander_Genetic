@@ -1,7 +1,10 @@
 // Include standard headers
 #include <algorithm>
 #include <assert.h>
+#include <fstream>
 #include <iostream>
+#include <string>
+#include <vector>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -76,4 +79,18 @@ bool isIntersect(Line_d l1, Line_d l2) {
     return true;
 
   return false;
+}
+
+/************************************************************/
+void writeSolution(const std::string &f_fileName,
+                   const std::vector<Gene> &f_solution) {
+  std::ofstream out_file(f_fileName);
+  if (out_file.is_open()) {
+    for (int i = 0; i < f_solution.size(); ++i) {
+      if (i > 0)
+        out_file << " ";
+      out_file << f_solution[i].angle << "," << f_solution[i].thrust;
+    }
+    out_file.close();
+  }
 }
