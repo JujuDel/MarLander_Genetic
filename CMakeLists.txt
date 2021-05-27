@@ -55,7 +55,10 @@ add_executable(MarsLander_Genetic
 	1_MarsLander_Genetic/Genetic.hpp
 	1_MarsLander_Genetic/Utils.cpp
 	1_MarsLander_Genetic/Utils.hpp
-	1_MarsLander_Genetic/levels.hpp
+	1_MarsLander_Genetic/Levels.cpp
+	1_MarsLander_Genetic/Levels.hpp
+	1_MarsLander_Genetic/Visualize.cpp
+	1_MarsLander_Genetic/Visualize.hpp
 	1_MarsLander_Genetic/shaders/FloorFragmentShader.fragmentshader
 	1_MarsLander_Genetic/shaders/FloorVertexShader.vertexshader
 	1_MarsLander_Genetic/shaders/RocketFireFragmentShader.fragmentshader
