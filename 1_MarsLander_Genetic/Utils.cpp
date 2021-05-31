@@ -83,13 +83,21 @@ bool isIntersect(Line_d l1, Line_d l2) {
 
 /************************************************************/
 void writeSolution(const std::string &f_fileName,
-                   const std::vector<Gene> &f_solution) {
+                   const Chromosome *f_chromosomeSolution, const int f_idxStart,
+                   const std::vector<Gene> &f_solutionIncremental) {
   std::ofstream out_file(f_fileName);
   if (out_file.is_open()) {
-    for (int i = 0; i < f_solution.size(); ++i) {
+    for (int i = 0; i < f_idxStart; ++i) {
       if (i > 0)
         out_file << " ";
-      out_file << f_solution[i].angle << "," << f_solution[i].thrust;
+      out_file << f_solutionIncremental[i].angle << ","
+               << f_solutionIncremental[i].thrust;
+    }
+    for (int i = f_idxStart; i < _CHROMOSOME_SIZE; ++i) {
+      if (i > 0)
+        out_file << " ";
+      out_file << f_chromosomeSolution->getGene(i)->angle << ","
+               << f_chromosomeSolution->getGene(i)->thrust;
     }
     out_file.close();
   }

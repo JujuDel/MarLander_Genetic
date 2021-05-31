@@ -57,7 +57,8 @@ struct Chromosome {
   //! @param[in] i The index of the gene.
   //!
   //! @ return A pointer to the gene.
-  Gene *getGene(const std::uint8_t i);
+  Gene* getGene(const std::uint8_t i);
+  const Gene* getGene(const std::uint8_t i)const;
 
   //! @brief  Sort method for the STL sort function.
   static bool chromosome_sorter(Chromosome const &lhs, Chromosome const &rhs);

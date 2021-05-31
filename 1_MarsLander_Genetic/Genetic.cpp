@@ -64,6 +64,13 @@ Gene *Chromosome::getGene(const std::uint8_t i) {
   }
   return nullptr;
 }
+/************************************************************/
+const Gene *Chromosome::getGene(const std::uint8_t i) const {
+  if (i < _CHROMOSOME_SIZE) {
+    return &chromosome[i];
+  }
+  return nullptr;
+}
 
 /************************************************************/
 bool Chromosome::chromosome_sorter(Chromosome const &lhs,
